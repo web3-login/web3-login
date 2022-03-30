@@ -1,0 +1,7 @@
+[debug]
+port = 8000
+ext_hostname = "http://localhost:8000"
+
+[release]
+address = "0.0.0.0"
+port = 8080
