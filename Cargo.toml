@@ -14,5 +14,7 @@ eth = ["web3"]
 nft = ["eth"]
 
 [dependencies]
+rocket = { version = "0.5.0-rc.1", features = ["json"] }
+rocket-include-static-resources = { version = "0.10.0", features=["cache"] }
 tokio = { version = "1.17.0", features = ["full"] }
 web3 = {version = "0.18", default-features = false, features = ["signing", "http-rustls-tls"], optional = true}
