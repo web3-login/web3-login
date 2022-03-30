@@ -1,0 +1,18 @@
+[package]
+authors = ["Christian <chriamue@gmail.com>"]
+description = "oidc provider using web3 technologies"
+edition = "2021"
+license = "MIT"
+name = "web3-login"
+readme = "README.md"
+repository = "https://github.com/web3-login/web3-login"
+version = "0.1.0"
+
+[features]
+default = []
+eth = ["web3"]
+nft = ["eth"]
+
+[dependencies]
+tokio = { version = "1.17.0", features = ["full"] }
+web3 = {version = "0.18", default-features = false, features = ["signing", "http-rustls-tls"], optional = true}
