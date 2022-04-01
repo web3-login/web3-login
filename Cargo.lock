@@ -2316,6 +2316,8 @@ version = "0.1.0"
 dependencies = [
  "rocket",
  "rocket-include-static-resources",
+ "serde",
+ "serde_json",
  "tokio",
  "web3",
 ]

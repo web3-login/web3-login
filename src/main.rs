@@ -4,10 +4,18 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_include_static_resources;
 
+use std::collections::HashMap;
+
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
+use rocket::serde::json::Json;
 use rocket::{Request, Response, State};
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
+
+mod config;
+mod tests;
+
+use config::Config;
 
 cached_static_response_handler! {
     259_200;
@@ -50,9 +58,18 @@ fn unauthorized() -> String {
     "We could not find a token for your address on this contract.".to_string()
 }
 
+#[get("/providers")]
+fn get_providers(config: &State<Config>) -> Json<HashMap<String, String>> {
+    Json(config.node_provider.clone())
+}
+
 #[launch]
 pub fn rocket() -> _ {
     let rocket = rocket::build();
+    let figment = rocket.figment();
+    let mut config: Config = figment.extract().expect("config");
+    config.rsa_pem = Some(include_str!("../do-not-use.pem").to_string());
+
     rocket
         .attach(static_resources_initializer!(
             "indexjs" => "static/index.js",
@@ -61,6 +78,7 @@ pub fn rocket() -> _ {
         ))
         .attach(CORS)
         .mount("/", routes![cached_indexjs, cached_indexcss])
-        .mount("/", routes![default_index])
+        .mount("/", routes![default_index, get_providers])
+        .manage(config)
         .register("/", catchers![unauthorized])
 }

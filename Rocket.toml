@@ -1,3 +1,35 @@
+[default]
+ident = "web3-login"
+key_id = "changeme"
+[default.node_provider]
+default = "https://kovan.infura.io/v3/43"
+kovan = "https://kovan.infura.io/v3/43"
+okt = "https://exchaintestrpc.okex.org"
+clv = "https://rpc-3.clover.finance"
+heco = "https://http-testnet.hecochain.com"
+celo = "https://alfajores-forno.celo-testnet.org"
+polygon = "https://matic-mumbai.chainstacklabs.com/"
+metis = "https://stardust.metis.io/?owner=588"
+theta = "https://eth-rpc-api-testnet.thetatoken.org/rpc"
+avax = "https://api.avax-test.network/ext/bc/C/rpc"
+binance = "https://data-seed-prebsc-1-s1.binance.org:8545/"
+evmos = "https://ethereum.rpc.evmos.dev"
+main = "https://cloudflare-eth.com"
+[default.chain_id]
+default = 42
+kovan = 42
+okt = 65
+clv = 1023
+heco = 256
+celo = 44787
+polygon = 80001
+metis = 588
+theta = 365
+avax = 43113
+binance = 97
+evmos = 9000
+main = 1
+
 [debug]
 port = 8000
 ext_hostname = "http://localhost:8000"
@@ -5,3 +37,5 @@ ext_hostname = "http://localhost:8000"
 [release]
 address = "0.0.0.0"
 port = 8080
+ext_hostname = "https://web3-login.example.com"
+rsa_pem = "../do-not-use.pem"
