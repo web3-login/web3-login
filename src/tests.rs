@@ -1,4 +1,3 @@
-
 #[cfg(test)]
 mod client_test {
     use crate::rocket;
@@ -25,9 +24,21 @@ mod config_test {
         let client = Client::tracked(rocket()).expect("valid rocket instance");
         let response = client.get("/providers").dispatch();
         assert_eq!(response.status(), Status::Ok);
-        let userinfo = response.into_json::<Value>().unwrap();
-        
-        assert_eq!(userinfo.get("kovan").unwrap().as_str().unwrap(), "https://kovan.infura.io/v3/43");
-        
+        let response = response.into_json::<Value>().unwrap();
+
+        assert_eq!(
+            response.get("kovan").unwrap().as_str().unwrap(),
+            "https://kovan.infura.io/v3/43"
+        );
+    }
+
+    #[test]
+    fn test_jwk() {
+        let client = Client::tracked(rocket()).expect("valid rocket instance");
+        let response = client.get("/jwk").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        let response = response.into_json::<Value>().unwrap();
+
+        assert!(response.get("keys").is_some());
     }
 }
