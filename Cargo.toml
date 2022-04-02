@@ -9,9 +9,9 @@ repository = "https://github.com/web3-login/web3-login"
 version = "0.1.0"
 
 [features]
-default = []
-eth = ["web3"]
-nft = ["eth"]
+default = ["account"]
+account = ["web3"]
+nft = ["account"]
 
 [dependencies]
 openidconnect = "2.2"

@@ -8,14 +8,14 @@ use std::collections::HashMap;
 
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
-use rocket::serde::json::{Json, Value};
+use rocket::serde::json::Json;
 use rocket::{Request, Response, State};
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
+mod account_endpoints;
 mod tests;
 
 use web3_login::config::Config;
-use web3_login::jwk::jwk;
 
 cached_static_response_handler! {
     259_200;
@@ -63,11 +63,6 @@ fn get_providers(config: &State<Config>) -> Json<HashMap<String, String>> {
     Json(config.node_provider.clone())
 }
 
-#[get("/jwk")]
-fn get_jwk(config: &State<Config>) -> Json<Value> {
-    Json(jwk(config, "".into()))
-}
-
 #[launch]
 pub fn rocket() -> _ {
     let rocket = rocket::build();
@@ -83,7 +78,11 @@ pub fn rocket() -> _ {
         ))
         .attach(CORS)
         .mount("/", routes![cached_indexjs, cached_indexcss])
-        .mount("/", routes![default_index, get_providers, get_jwk])
+        .mount(
+            "/",
+            routes![default_index, get_providers, account_endpoints::get_jwk],
+        )
+        .mount("/account/", routes![account_endpoints::get_jwk])
         .manage(config)
         .register("/", catchers![unauthorized])
 }
