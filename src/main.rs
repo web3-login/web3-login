@@ -66,8 +66,7 @@ fn get_providers(config: &State<Config>) -> Json<HashMap<String, String>> {
 
 #[get("/realms")]
 fn get_realms(config: &State<Config>) -> Json<Vec<String>> {
-    let config = config.clone();
-    Json(realms(&config))
+    Json(realms(config))
 }
 
 #[launch]
@@ -94,8 +93,22 @@ pub fn rocket() -> _ {
                 account_endpoints::get_jwk
             ],
         )
-        .mount("/account/", routes![account_endpoints::get_jwk])
-        .mount("/nft/", routes![nft_endpoints::get_jwk])
+        .mount(
+            "/account/",
+            routes![
+                account_endpoints::get_jwk,
+                account_endpoints::get_openid_configuration,
+                account_endpoints::get_oauth_authorization_server
+            ],
+        )
+        .mount(
+            "/nft/",
+            routes![
+                nft_endpoints::get_jwk,
+                nft_endpoints::get_openid_configuration,
+                nft_endpoints::get_oauth_authorization_server
+            ],
+        )
         .manage(config)
         .register("/", catchers![unauthorized])
 }
