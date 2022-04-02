@@ -21,26 +21,26 @@ pub struct ClaimsMutex {
     pub additional_claims: Arc<Mutex<HashMap<String, Claims>>>,
 }
 
-pub fn standard_claims(account: &String) -> StandardClaims<CoreGenderClaim> {
-    StandardClaims::new(SubjectIdentifier::new(account.clone()))
+pub fn standard_claims(account: &str) -> StandardClaims<CoreGenderClaim> {
+    StandardClaims::new(SubjectIdentifier::new(account.to_string()))
         .set_name(Some(EndUserName::new("anonymous".to_string()).into()))
 }
 
 pub fn additional_claims(
-    account: &String,
-    nonce: &String,
-    signature: &String,
+    account: &str,
+    nonce: &str,
+    signature: &str,
     chain_id: &i32,
-    node: &String,
-    contract: &String,
+    node: &str,
+    contract: &str,
 ) -> Claims {
     Claims {
-        account: account.clone(),
-        nonce: nonce.clone(),
-        signature: signature.clone(),
+        account: account.to_string(),
+        nonce: nonce.to_string(),
+        signature: signature.to_string(),
         chain_id: *chain_id,
-        node: node.clone(),
-        contract: contract.clone(),
+        node: node.to_string(),
+        contract: contract.to_string(),
     }
 }
 

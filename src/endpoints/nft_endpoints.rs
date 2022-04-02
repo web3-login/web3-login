@@ -15,7 +15,7 @@ use web3_login::jwk::jwk;
 
 #[get("/<realm>/jwk")]
 pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
-    Json(jwk(config, realm.clone()))
+    Json(jwk(config, realm))
 }
 
 #[get("/<realm>/.well-known/openid-configuration")]

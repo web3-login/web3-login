@@ -5,6 +5,7 @@ extern crate rocket;
 extern crate rocket_include_static_resources;
 
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
@@ -12,10 +13,14 @@ use rocket::serde::json::Json;
 use rocket::{Request, Response, State};
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
-mod account_endpoints;
-mod nft_endpoints;
+mod bearer;
+mod endpoints;
 mod tests;
 
+use endpoints::account_endpoints;
+use endpoints::nft_endpoints;
+
+use web3_login::claims::ClaimsMutex;
 use web3_login::config::{realms, Config};
 
 cached_static_response_handler! {
@@ -76,6 +81,11 @@ pub fn rocket() -> _ {
     let mut config: Config = figment.extract().expect("config");
     config.rsa_pem = Some(include_str!("../do-not-use.pem").to_string());
 
+    let claims: ClaimsMutex = ClaimsMutex {
+        standard_claims: Arc::new(Mutex::new(HashMap::new())),
+        additional_claims: Arc::new(Mutex::new(HashMap::new())),
+    };
+
     rocket
         .attach(static_resources_initializer!(
             "indexjs" => "static/index.js",
@@ -90,7 +100,8 @@ pub fn rocket() -> _ {
             routes![
                 account_endpoints::get_jwk,
                 account_endpoints::get_openid_configuration,
-                account_endpoints::get_oauth_authorization_server
+                account_endpoints::get_oauth_authorization_server,
+                endpoints::get_userinfo
             ],
         )
         .mount(
@@ -98,9 +109,11 @@ pub fn rocket() -> _ {
             routes![
                 nft_endpoints::get_jwk,
                 nft_endpoints::get_openid_configuration,
-                nft_endpoints::get_oauth_authorization_server
+                nft_endpoints::get_oauth_authorization_server,
+                endpoints::get_userinfo
             ],
         )
         .manage(config)
+        .manage(claims)
         .register("/", catchers![unauthorized])
 }
