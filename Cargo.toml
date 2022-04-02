@@ -14,6 +14,7 @@ account = ["web3"]
 nft = ["account"]
 
 [dependencies]
+chrono = "0.4"
 openidconnect = "2.2"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
 rocket-include-static-resources = {version = "0.10", features = ["cache"]}

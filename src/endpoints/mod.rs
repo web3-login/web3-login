@@ -3,6 +3,7 @@ use rocket::response::status::NotFound;
 use rocket::serde::json::Json;
 use rocket::State;
 use web3_login::claims::{Claims, ClaimsMutex};
+use web3_login::token::{Tokens, Web3TokenResponse};
 use web3_login::userinfo::userinfo;
 
 use crate::bearer::Bearer;
@@ -21,6 +22,27 @@ pub async fn get_userinfo(
     match userinfo(claims, access_token) {
         Some(userinfo) => Ok(Json(userinfo)),
         None => Err(NotFound("No user found!".to_string())),
+    }
+}
+
+#[allow(unused_variables)]
+#[get("/<realm>/token?<code>")]
+pub fn get_token(
+    tokens: &State<Tokens>,
+    realm: String,
+    code: String,
+) -> Result<Json<Web3TokenResponse>, NotFound<String>> {
+    let mutex = tokens.bearer.lock().unwrap();
+    let access_token = mutex.get(&code);
+    if access_token.is_none() {
+        return Err(NotFound("Invalid Code".to_string()));
+    }
+    let access_token = access_token.unwrap();
+    let mutex = tokens.muted.lock().unwrap();
+    let token = mutex.get(access_token);
+    match token {
+        Some(token) => Ok(Json(token.clone())),
+        _ => Err(NotFound("Invalid Code".to_string())),
     }
 }
 

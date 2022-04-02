@@ -22,6 +22,7 @@ use endpoints::nft_endpoints;
 
 use web3_login::claims::ClaimsMutex;
 use web3_login::config::{realms, Config};
+use web3_login::token::Tokens;
 
 cached_static_response_handler! {
     259_200;
@@ -81,6 +82,11 @@ pub fn rocket() -> _ {
     let mut config: Config = figment.extract().expect("config");
     config.rsa_pem = Some(include_str!("../do-not-use.pem").to_string());
 
+    let tokens: Tokens = Tokens {
+        muted: Arc::new(Mutex::new(HashMap::new())),
+        bearer: Arc::new(Mutex::new(HashMap::new())),
+    };
+
     let claims: ClaimsMutex = ClaimsMutex {
         standard_claims: Arc::new(Mutex::new(HashMap::new())),
         additional_claims: Arc::new(Mutex::new(HashMap::new())),
@@ -101,7 +107,8 @@ pub fn rocket() -> _ {
                 account_endpoints::get_jwk,
                 account_endpoints::get_openid_configuration,
                 account_endpoints::get_oauth_authorization_server,
-                endpoints::get_userinfo
+                endpoints::get_userinfo,
+                endpoints::get_token
             ],
         )
         .mount(
@@ -110,10 +117,12 @@ pub fn rocket() -> _ {
                 nft_endpoints::get_jwk,
                 nft_endpoints::get_openid_configuration,
                 nft_endpoints::get_oauth_authorization_server,
-                endpoints::get_userinfo
+                endpoints::get_userinfo,
+                endpoints::get_token
             ],
         )
         .manage(config)
         .manage(claims)
+        .manage(tokens)
         .register("/", catchers![unauthorized])
 }
