@@ -13,6 +13,7 @@ use rocket::{Request, Response, State};
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
 
 mod account_endpoints;
+mod nft_endpoints;
 mod tests;
 
 use web3_login::config::Config;
@@ -83,6 +84,7 @@ pub fn rocket() -> _ {
             routes![default_index, get_providers, account_endpoints::get_jwk],
         )
         .mount("/account/", routes![account_endpoints::get_jwk])
+        .mount("/nft/", routes![nft_endpoints::get_jwk])
         .manage(config)
         .register("/", catchers![unauthorized])
 }
