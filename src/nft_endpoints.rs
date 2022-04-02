@@ -13,17 +13,17 @@ use openidconnect::{
 use web3_login::config::Config;
 use web3_login::jwk::jwk;
 
-#[get("/jwk")]
-pub fn get_jwk(config: &State<Config>) -> Json<Value> {
-    Json(jwk(config, "".into()))
+#[get("/<realm>/jwk")]
+pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
+    Json(jwk(config, realm.clone()))
 }
 
 #[get("/<realm>/.well-known/openid-configuration")]
 pub fn get_openid_configuration(config: &State<Config>, realm: String) -> content::Json<Value> {
     let provider_metadata = CoreProviderMetadata::new(
-        IssuerUrl::new(format!("{}/{}", config.ext_hostname, realm)).unwrap(),
-        AuthUrl::new(format!("{}/{}/authorize", config.ext_hostname, realm)).unwrap(),
-        JsonWebKeySetUrl::new(format!("{}/{}/jwk", config.ext_hostname, realm)).unwrap(),
+        IssuerUrl::new(format!("{}/nft/{}", config.ext_hostname, realm)).unwrap(),
+        AuthUrl::new(format!("{}/nft/{}/authorize", config.ext_hostname, realm)).unwrap(),
+        JsonWebKeySetUrl::new(format!("{}/nft/{}/jwk", config.ext_hostname, realm)).unwrap(),
         vec![
             ResponseTypes::new(vec![CoreResponseType::Code]),
             ResponseTypes::new(vec![CoreResponseType::Token, CoreResponseType::IdToken]),
@@ -33,10 +33,10 @@ pub fn get_openid_configuration(config: &State<Config>, realm: String) -> conten
         EmptyAdditionalProviderMetadata {},
     )
     .set_token_endpoint(Some(
-        TokenUrl::new(format!("{}/{}/token", config.ext_hostname, realm)).unwrap(),
+        TokenUrl::new(format!("{}/nft/{}/token", config.ext_hostname, realm)).unwrap(),
     ))
     .set_userinfo_endpoint(Some(
-        UserInfoUrl::new(format!("{}/{}/userinfo", config.ext_hostname, realm)).unwrap(),
+        UserInfoUrl::new(format!("{}/nft/{}/userinfo", config.ext_hostname, realm)).unwrap(),
     ))
     .set_scopes_supported(Some(vec![Scope::new("openid".to_string())]))
     .set_claims_supported(Some(vec![
@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn test_jwk() {
         let client = Client::tracked(rocket()).expect("valid rocket instance");
-        let response = client.get("/nft/jwk").dispatch();
+        let response = client.get("/nft/default/jwk").dispatch();
         assert_eq!(response.status(), Status::Ok);
         let response = response.into_json::<Value>().unwrap();
 
