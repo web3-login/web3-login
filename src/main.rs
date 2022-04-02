@@ -16,7 +16,7 @@ mod account_endpoints;
 mod nft_endpoints;
 mod tests;
 
-use web3_login::config::Config;
+use web3_login::config::{realms, Config};
 
 cached_static_response_handler! {
     259_200;
@@ -64,6 +64,12 @@ fn get_providers(config: &State<Config>) -> Json<HashMap<String, String>> {
     Json(config.node_provider.clone())
 }
 
+#[get("/realms")]
+fn get_realms(config: &State<Config>) -> Json<Vec<String>> {
+    let config = config.clone();
+    Json(realms(&config))
+}
+
 #[launch]
 pub fn rocket() -> _ {
     let rocket = rocket::build();
@@ -81,7 +87,12 @@ pub fn rocket() -> _ {
         .mount("/", routes![cached_indexjs, cached_indexcss])
         .mount(
             "/",
-            routes![default_index, get_providers, account_endpoints::get_jwk],
+            routes![
+                default_index,
+                get_providers,
+                get_realms,
+                account_endpoints::get_jwk
+            ],
         )
         .mount("/account/", routes![account_endpoints::get_jwk])
         .mount("/nft/", routes![nft_endpoints::get_jwk])

@@ -33,6 +33,16 @@ mod config_test {
     }
 
     #[test]
+    fn test_realms() {
+        let client = Client::tracked(rocket()).expect("valid rocket instance");
+        let response = client.get("/realms").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+
+        let response = response.into_json::<Value>().unwrap();
+        assert!(response.as_array().unwrap().len() > 0);
+    }
+
+    #[test]
     fn test_jwk() {
         let client = Client::tracked(rocket()).expect("valid rocket instance");
         let response = client.get("/jwk").dispatch();

@@ -9,3 +9,11 @@ pub struct Config {
     pub chain_id: HashMap<String, i32>,
     pub rsa_pem: Option<String>,
 }
+
+pub fn realms(config: &Config) -> Vec<String> {
+    config
+        .node_provider
+        .keys()
+        .map(|f| f.clone())
+        .collect::<Vec<String>>()
+}
