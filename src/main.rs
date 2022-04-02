@@ -38,6 +38,16 @@ fn default_index(
     static_resources.build(&etag_if_none_match, "index")
 }
 
+#[allow(unused_variables)]
+#[get("/<realm>")]
+fn index(
+    static_resources: &State<StaticContextManager>,
+    etag_if_none_match: EtagIfNoneMatch,
+    realm: String,
+) -> StaticResponse {
+    static_resources.build(&etag_if_none_match, "index")
+}
+
 pub struct CORS;
 
 #[rocket::async_trait]
@@ -104,6 +114,7 @@ pub fn rocket() -> _ {
         .mount(
             "/account/",
             routes![
+                index,
                 account_endpoints::get_jwk,
                 account_endpoints::get_openid_configuration,
                 account_endpoints::get_oauth_authorization_server,
@@ -114,12 +125,13 @@ pub fn rocket() -> _ {
         .mount(
             "/nft/",
             routes![
+                index,
                 nft_endpoints::get_jwk,
                 nft_endpoints::get_openid_configuration,
                 nft_endpoints::get_oauth_authorization_server,
                 endpoints::get_userinfo,
                 endpoints::get_token,
-                nft_endpoints::authorize_endpoint
+                nft_endpoints::get_authorize
             ],
         )
         .manage(config)

@@ -69,7 +69,7 @@ pub fn get_oauth_authorization_server(
 #[get(
     "/<realm>/authorize?<client_id>&<redirect_uri>&<state>&<response_type>&<response_mode>&<nonce>&<account>&<signature>&<chain_id>&<contract>"
 )]
-pub async fn authorize_endpoint(
+pub async fn get_authorize(
     config: &State<Config>,
     claims: &State<ClaimsMutex>,
     tokens: &State<Tokens>,
@@ -86,7 +86,7 @@ pub async fn authorize_endpoint(
     contract: Option<String>,
 ) -> Result<Redirect, (Status, String)> {
     if account.is_none() {
-        let mut url = Url::parse(&format!("{}/{}", config.ext_hostname, realm)).unwrap();
+        let mut url = Url::parse(&format!("{}/nft/{}", config.ext_hostname, realm)).unwrap();
         url.query_pairs_mut()
             .clear()
             .append_pair("client_id", &client_id)
