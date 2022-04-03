@@ -8,6 +8,10 @@ body {
     background-color: whitesmoke;
 }
 
+#login-main {
+    min-height: 200px;
+}
+
 footer {
     position: absolute;
     bottom: 0;
