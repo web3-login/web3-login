@@ -131,7 +131,8 @@ pub fn rocket() -> _ {
                 nft_endpoints::get_oauth_authorization_server,
                 endpoints::get_userinfo,
                 endpoints::get_token,
-                nft_endpoints::get_authorize
+                nft_endpoints::get_authorize,
+                nft_endpoints::get_default_authorize
             ],
         )
         .manage(config)
