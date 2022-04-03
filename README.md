@@ -13,3 +13,20 @@ cargo build
 cargo test
 cargo run
 ```
+
+## cloudflare argo tunnel and docker
+
+```sh
+cloudflared tunnel create oidc-web3-login
+cp changeme-e246.json .cloudflared/
+```
+
+Update tunnel and credentials-file in `.cloudflared/config.yml`.
+
+```yml
+url: http://provider:8080
+tunnel: changeme-e246
+credentials-file: /etc/cloudflared/changeme-e246.json
+```
+
+Now you can run `docker-compose up -d`.

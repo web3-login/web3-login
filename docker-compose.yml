@@ -1,10 +1,18 @@
 version: "3.2"
 services:
   provider:
+    # image: ghcr.io/web3-login/web3-login/web3-login:latest
     build:
       context: .
       dockerfile: Dockerfile
     volumes:
       - ./Rocket.toml:/Rocket.toml
-    ports:
-      - "8080:8080"
+    #  - ./use.pem:/do-not-use.pem
+    # ports:
+    #  - "8080:8080"
+
+  tunnel:
+      image: cloudflare/cloudflared:2022.3.4
+      command: tunnel --config /etc/cloudflared/config.yml --no-autoupdate run
+      volumes:
+        - "./.cloudflared:/etc/cloudflared"

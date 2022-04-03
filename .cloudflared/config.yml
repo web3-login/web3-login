@@ -1,0 +1,3 @@
+url: http://provider:8080
+tunnel: changeme-e246
+credentials-file: /etc/cloudflared/changeme-e246.json
