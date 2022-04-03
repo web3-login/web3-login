@@ -113,6 +113,7 @@ pub fn rocket() -> _ {
         .attach(CORS)
         .mount("/", routes![cached_indexjs, cached_indexcss, cached_favicon])
         .mount("/", routes![default_index, get_providers, get_realms])
+        .mount("/account/", routes![cached_indexjs, cached_indexcss, cached_favicon])
         .mount(
             "/account/",
             routes![
@@ -124,6 +125,7 @@ pub fn rocket() -> _ {
                 endpoints::get_token
             ],
         )
+        .mount("/nft/", routes![cached_indexjs, cached_indexcss, cached_favicon])
         .mount(
             "/nft/",
             routes![
