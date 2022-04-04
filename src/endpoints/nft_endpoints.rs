@@ -86,7 +86,7 @@ pub async fn get_authorize(
     contract: Option<String>,
 ) -> Result<Redirect, (Status, String)> {
     if account.is_none() {
-        let mut url = Url::parse(&format!("{}/nft/{}", config.ext_hostname, realm)).unwrap();
+        let mut url = Url::parse(&format!("{}/", config.frontend_host)).unwrap();
         url.query_pairs_mut()
             .clear()
             .append_pair("client_id", &client_id)
@@ -154,12 +154,15 @@ pub async fn get_authorize(
 
     let standard_claims = standard_claims(&account.clone().unwrap());
 
+    let node_provider_url = Url::parse(&node_provider).unwrap();
+    let node_provider_host = node_provider_url.host().unwrap().to_string();
+
     let additional_claims = additional_claims(
         &account.unwrap(),
         &nonce.clone().unwrap(),
         &signature.unwrap(),
         &chain_id,
-        &node_provider.clone(),
+        &node_provider_host,
         &contract,
     );
 
