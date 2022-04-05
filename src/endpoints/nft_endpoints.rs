@@ -102,17 +102,17 @@ pub async fn get_authorize(
     };
 
     if nonce.is_none() {
-        return Err((Status::BadRequest, "nonce missing".to_string()));
+        return Ok(Redirect::temporary("/400.html?message=nonce%20missing"));
     }
 
     if signature.is_none() {
-        return Err((Status::BadRequest, "signature missing".to_string()));
+        return Ok(Redirect::temporary("/400.html?message=signature%20missing"));
     }
 
     let redirect_uri = Url::parse(&redirect_uri);
 
     if redirect_uri.is_err() {
-        return Err((Status::BadRequest, "wrong redirect uri".to_string()));
+        return Ok(Redirect::temporary("/400.html?message=wrong%20redirect%20uri"));
     }
 
     let mut redirect_uri = redirect_uri.unwrap();
@@ -122,7 +122,7 @@ pub async fn get_authorize(
         nonce.clone().unwrap(),
         signature.clone().unwrap(),
     ) {
-        return Err((Status::BadRequest, "no valide signature".to_string()));
+        return Ok(Redirect::temporary("/400.html?message=no%20valide%20signature"));
     }
 
     let realm_or_chain_id = match realm.as_str() {
@@ -142,10 +142,10 @@ pub async fn get_authorize(
 
     if is_owner.is_ok() {
         if !is_owner.unwrap() {
-            return Err((Status::Unauthorized, "account is no owner".to_string()));
+            return Ok(Redirect::temporary("/401.html"));
         }
     } else {
-        return Err((Status::Unauthorized, "account is no owner".to_string()));
+        return Ok(Redirect::temporary("/401.html"));
     }
 
     let access_token = AccessToken::new(Uuid::new_v4().to_string());
@@ -317,7 +317,6 @@ mod tests {
     }
 }
 
-
 #[cfg(test)]
 mod authorize_tests {
     use crate::rocket;
@@ -339,8 +338,7 @@ mod authorize_tests {
         assert_eq!(response.status(), Status::TemporaryRedirect);
         let response_url = Url::parse(response.headers().get("Location").next().unwrap()).unwrap();
         let mut path_segments = response_url.path_segments().unwrap();
-        assert_eq!(path_segments.next(), Some("nft"));
-        assert_eq!(path_segments.next(), Some("kovan"));
+        assert_eq!(path_segments.next(), Some(""));
 
         let params: HashMap<String, String> = response_url
             .query()
@@ -374,8 +372,8 @@ mod authorize_tests {
                 client_id, nonce, contract, account, signature
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::BadRequest);
-        assert_eq!(response.into_string().unwrap(), "wrong redirect uri");
+        assert_eq!(response.status(), Status::TemporaryRedirect);
+        //assert_eq!(response.into_string().unwrap(), "wrong redirect uri");
     }
 
     #[test]
@@ -456,10 +454,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        println!("{:?}", response);
         let response_url = Url::parse(response.headers().get("Location").next().unwrap()).unwrap();
         let mut path_segments = response_url.path_segments().unwrap();
-        assert_eq!(path_segments.next(), Some("nft"));
-        assert_eq!(path_segments.next(), Some("kovan"));
+        assert_eq!(path_segments.next(), Some(""));
 
         let params: HashMap<String, String> = response_url
             .query()
@@ -489,7 +487,7 @@ mod authorize_tests {
                 client_id, contract, account
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::BadRequest);
+        assert_eq!(response.status(), Status::TemporaryRedirect);
 
         let response = client
             .get(format!(
@@ -497,7 +495,7 @@ mod authorize_tests {
                 client_id, contract, account
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::BadRequest);
+        assert_eq!(response.status(), Status::TemporaryRedirect);
 
         let response = client
             .get(format!(
@@ -505,7 +503,7 @@ mod authorize_tests {
                 client_id, contract, account, signature
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::BadRequest);
+        assert_eq!(response.status(), Status::TemporaryRedirect);
     }
 
     #[test]
@@ -524,7 +522,7 @@ mod authorize_tests {
                 client_id, nonce, contract, account, signature
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::Unauthorized);
+        assert_eq!(response.status(), Status::TemporaryRedirect);
     }
 
     #[test]
@@ -543,8 +541,8 @@ mod authorize_tests {
                 client_id, nonce, contract, account, signature
             ))
             .dispatch();
-        assert_eq!(response.status(), Status::Unauthorized);
-        assert_eq!(response.into_string().unwrap(), "account is no owner");
+        assert_eq!(response.status(), Status::TemporaryRedirect);
+        //assert_eq!(response.into_string().unwrap(), "account is no owner");
     }
 
     #[test]

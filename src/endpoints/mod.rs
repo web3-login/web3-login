@@ -57,7 +57,7 @@ mod tests {
         let client = Client::tracked(rocket()).expect("valid rocket instance");
 
         let response = client.get("/nft/default/userinfo").dispatch();
-        assert_eq!(response.status(), Status::BadRequest);
+        assert_eq!(response.status(), Status::TemporaryRedirect);
 
         let response = client
             .get("/nft/default/userinfo")

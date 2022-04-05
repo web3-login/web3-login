@@ -8,7 +8,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use rocket::fairing::{Fairing, Info, Kind};
-use rocket::http::Header;
+use rocket::http::{Header, Status};
+use rocket::response::Redirect;
 use rocket::serde::json::Json;
 use rocket::{Request, Response, State};
 use rocket_include_static_resources::{EtagIfNoneMatch, StaticContextManager, StaticResponse};
@@ -29,6 +30,8 @@ cached_static_response_handler! {
     "/index.js" => cached_indexjs => "indexjs",
     "/index.css" => cached_indexcss => "indexcss",
     "/favicon.ico" => cached_favicon => "favicon",
+    "/400.html" => cached_400 => "error400",
+    "/401.html" => cached_401 => "error401",
 }
 
 #[get("/")]
@@ -72,8 +75,13 @@ impl Fairing for CORS {
 }
 
 #[catch(401)]
-fn unauthorized() -> String {
-    "We could not find a token for your address on this contract.".to_string()
+fn unauthorized() -> Redirect {
+    Redirect::temporary("/401.html")
+}
+
+#[catch(400)]
+fn bad_request() -> Redirect {
+    Redirect::temporary("/400.html")
 }
 
 #[get("/providers")]
@@ -84,6 +92,11 @@ fn get_providers(config: &State<Config>) -> Json<HashMap<String, String>> {
 #[get("/realms")]
 fn get_realms(config: &State<Config>) -> Json<Vec<String>> {
     Json(realms(config))
+}
+
+#[get("/frontend")]
+pub async fn get_frontend(config: &State<Config>) -> Result<Redirect, (Status, String)> {
+    Ok(Redirect::temporary(config.frontend_host.to_string()))
 }
 
 #[launch]
@@ -108,12 +121,29 @@ pub fn rocket() -> _ {
             "indexjs" => "static/index.js",
             "indexcss" => "static/index.css",
             "favicon" => "static/favicon.ico",
+            "error400" => "static/400.html",
+            "error401" => "static/401.html",
             "index" => ("static", "index.html"),
         ))
         .attach(CORS)
-        .mount("/", routes![cached_indexjs, cached_indexcss, cached_favicon])
-        .mount("/", routes![default_index, get_providers, get_realms])
-        .mount("/account/", routes![cached_indexjs, cached_indexcss, cached_favicon])
+        .mount(
+            "/",
+            routes![
+                cached_indexjs,
+                cached_indexcss,
+                cached_favicon,
+                cached_400,
+                cached_401
+            ],
+        )
+        .mount(
+            "/",
+            routes![default_index, get_providers, get_realms, get_frontend],
+        )
+        .mount(
+            "/account/",
+            routes![cached_indexjs, cached_indexcss, cached_favicon],
+        )
         .mount(
             "/account/",
             routes![
@@ -125,7 +155,10 @@ pub fn rocket() -> _ {
                 endpoints::get_token
             ],
         )
-        .mount("/nft/", routes![cached_indexjs, cached_indexcss, cached_favicon])
+        .mount(
+            "/nft/",
+            routes![cached_indexjs, cached_indexcss, cached_favicon],
+        )
         .mount(
             "/nft/",
             routes![
@@ -142,5 +175,5 @@ pub fn rocket() -> _ {
         .manage(config)
         .manage(claims)
         .manage(tokens)
-        .register("/", catchers![unauthorized])
+        .register("/", catchers![bad_request, unauthorized])
 }
