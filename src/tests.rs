@@ -39,6 +39,6 @@ mod config_test {
         assert_eq!(response.status(), Status::Ok);
 
         let response = response.into_json::<Value>().unwrap();
-        assert!(response.as_array().unwrap().len() > 0);
+        assert!(!response.as_array().unwrap().is_empty());
     }
 }

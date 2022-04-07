@@ -15,11 +15,11 @@ pub fn realms(config: &Config) -> Vec<String> {
     config
         .node_provider
         .keys()
-        .map(|f| f.clone())
+        .cloned()
         .collect::<Vec<String>>()
 }
 
-pub fn get_chain_id(config: &Config, realm: &String) -> i32 {
+pub fn get_chain_id(config: &Config, realm: &str) -> i32 {
     let numeric = realm.parse::<i32>();
     match numeric {
         Ok(ok) => match config.chain_id.values().any(|&val| val == ok) {
@@ -30,7 +30,7 @@ pub fn get_chain_id(config: &Config, realm: &String) -> i32 {
     }
 }
 
-pub fn get_node(config: &Config, realm: &String) -> String {
+pub fn get_node(config: &Config, realm: &str) -> String {
     let chain_id = get_chain_id(config, realm);
 
     let node = config

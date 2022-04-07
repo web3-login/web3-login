@@ -1,7 +1,4 @@
-use crate::{
-    config::{get_node, Config},
-    web3::{is_nft_owner_of, validate_signature},
-};
+use crate::web3::{is_nft_owner_of, validate_signature};
 use async_trait::async_trait;
 use std::fmt;
 

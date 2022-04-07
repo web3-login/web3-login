@@ -19,7 +19,6 @@ use web3_login::claims::{additional_claims, standard_claims, ClaimsMutex};
 use web3_login::config::{get_chain_id, get_node, Config};
 use web3_login::jwk::jwk;
 use web3_login::token::{token, Tokens};
-use web3_login::web3::{is_nft_owner_of, validate_signature};
 
 #[get("/<realm>/jwk")]
 pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
@@ -97,15 +96,18 @@ pub async fn get_authorize(
             .append_pair("response_mode", &response_mode.unwrap_or_default())
             .append_pair("redirect_uri", &redirect_uri)
             .append_pair("realm", &realm.clone())
-            .append_pair("chain_id", &chain_id.clone().unwrap_or(realm.clone()))
-            .append_pair("contract", &contract.unwrap_or(client_id.clone()));
+            .append_pair(
+                "chain_id",
+                &chain_id.clone().unwrap_or_else(|| realm.clone()),
+            )
+            .append_pair("contract", &contract.unwrap_or_else(|| client_id.clone()));
         return Ok(Redirect::temporary(url.to_string()));
     };
 
-    let contract = contract.unwrap_or(client_id.clone());
+    let contract = contract.unwrap_or_else(|| client_id.clone());
 
     let realm_or_chain_id = match realm.as_str() {
-        "default" => chain_id.clone().unwrap_or("default".into()),
+        "default" => chain_id.clone().unwrap_or_else(|| "default".into()),
         _ => realm.clone(),
     };
 
@@ -208,11 +210,7 @@ pub async fn get_authorize(
                 .query_pairs_mut()
                 .append_pair("code", code.secret());
         }
-        if response_type.contains("id_token") {
-            redirect_uri
-                .query_pairs_mut()
-                .append_pair("id_token", &id_token);
-        } else if response_type.contains("token") {
+        if response_type.contains("id_token") || response_type.contains("token") {
             redirect_uri
                 .query_pairs_mut()
                 .append_pair("id_token", &id_token);
@@ -223,12 +221,9 @@ pub async fn get_authorize(
             .append_pair("code", code.secret());
     };
 
-    match state {
-        Some(state) => {
-            redirect_uri.query_pairs_mut().append_pair("state", &state);
-        }
-        _ => {}
-    }
+    if let Some(state) = state {
+        redirect_uri.query_pairs_mut().append_pair("state", &state);
+    };
 
     Ok(Redirect::temporary(redirect_uri.to_string()))
 }
@@ -256,7 +251,7 @@ pub async fn get_default_authorize(
         config,
         claims,
         tokens,
-        realm.unwrap_or("default".into()),
+        realm.unwrap_or_else(|| "default".into()),
         client_id,
         redirect_uri,
         state,
