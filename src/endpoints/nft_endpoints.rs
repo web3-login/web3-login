@@ -14,6 +14,7 @@ use openidconnect::{
 use url::Url;
 use uuid::Uuid;
 
+use web3_login::authorize::{Authorize, AuthorizeError, NFTAuthorize};
 use web3_login::claims::{additional_claims, standard_claims, ClaimsMutex};
 use web3_login::config::{get_chain_id, get_node, Config};
 use web3_login::jwk::jwk;
@@ -101,29 +102,7 @@ pub async fn get_authorize(
         return Ok(Redirect::temporary(url.to_string()));
     };
 
-    if nonce.is_none() {
-        return Ok(Redirect::temporary("/400.html?message=nonce%20missing"));
-    }
-
-    if signature.is_none() {
-        return Ok(Redirect::temporary("/400.html?message=signature%20missing"));
-    }
-
-    let redirect_uri = Url::parse(&redirect_uri);
-
-    if redirect_uri.is_err() {
-        return Ok(Redirect::temporary("/400.html?message=wrong%20redirect%20uri"));
-    }
-
-    let mut redirect_uri = redirect_uri.unwrap();
-
-    if !validate_signature(
-        account.clone().unwrap(),
-        nonce.clone().unwrap(),
-        signature.clone().unwrap(),
-    ) {
-        return Ok(Redirect::temporary("/400.html?message=no%20valide%20signature"));
-    }
+    let contract = contract.unwrap_or(client_id.clone());
 
     let realm_or_chain_id = match realm.as_str() {
         "default" => chain_id.clone().unwrap_or("default".into()),
@@ -131,22 +110,41 @@ pub async fn get_authorize(
     };
 
     let node_provider = get_node(config, &realm_or_chain_id);
-    let contract = contract.unwrap_or(client_id.clone());
 
-    let is_owner = is_nft_owner_of(
-        contract.clone(),
-        account.clone().unwrap_or_default(),
-        node_provider.clone(),
-    )
-    .await;
+    let authorize = NFTAuthorize {
+        account: account.clone(),
+        nonce: nonce.clone(),
+        signature: signature.clone(),
+        node: node_provider.clone(),
+        realm: realm_or_chain_id.clone(),
+        contract: contract.clone(),
+    };
 
-    if is_owner.is_ok() {
-        if !is_owner.unwrap() {
-            return Ok(Redirect::temporary("/401.html"));
-        }
-    } else {
-        return Ok(Redirect::temporary("/401.html"));
+    match authorize.authorize().await {
+        Ok(_) => (),
+        Err(err) => match err {
+            AuthorizeError::AccountError => {
+                return Ok(Redirect::temporary("/400.html?message=account%20missing"))
+            }
+            AuthorizeError::NonceError => {
+                return Ok(Redirect::temporary("/400.html?message=nonce%20missing"))
+            }
+            AuthorizeError::SignatureError => {
+                return Ok(Redirect::temporary("/400.html?message=signature%20missing"))
+            }
+            AuthorizeError::NFTError => return Ok(Redirect::temporary("/401.html")),
+        },
+    };
+
+    let redirect_uri = Url::parse(&redirect_uri);
+
+    if redirect_uri.is_err() {
+        return Ok(Redirect::temporary(
+            "/400.html?message=wrong%20redirect%20uri",
+        ));
     }
+
+    let mut redirect_uri = redirect_uri.unwrap();
 
     let access_token = AccessToken::new(Uuid::new_v4().to_string());
     let code = AuthorizationCode::new(Uuid::new_v4().to_string());

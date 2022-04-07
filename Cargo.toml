@@ -14,6 +14,7 @@ account = ["web3"]
 nft = ["account"]
 
 [dependencies]
+async-trait = "0.1.53"
 chrono = "0.4"
 hex = "0.4"
 openidconnect = "2.2"
