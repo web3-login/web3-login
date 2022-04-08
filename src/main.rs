@@ -152,7 +152,9 @@ pub fn rocket() -> _ {
                 account_endpoints::get_openid_configuration,
                 account_endpoints::get_oauth_authorization_server,
                 endpoints::get_userinfo,
-                endpoints::get_token
+                endpoints::get_token,
+                account_endpoints::get_authorize,
+                account_endpoints::get_default_authorize
             ],
         )
         .mount(
