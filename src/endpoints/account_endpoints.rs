@@ -113,8 +113,6 @@ pub async fn get_authorize(
         return Ok(Redirect::temporary(url.to_string()));
     };
 
-    let contract = contract.unwrap_or_else(|| client_id.clone());
-
     let realm_or_chain_id = match realm.as_str() {
         "default" => chain_id.clone().unwrap_or_else(|| "default".into()),
         _ => realm.clone(),
@@ -169,7 +167,7 @@ pub async fn get_authorize(
         &signature.unwrap(),
         &chain_id,
         &node_provider_host,
-        &contract,
+        "",
     );
 
     claims
