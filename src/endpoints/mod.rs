@@ -28,11 +28,24 @@ pub async fn get_userinfo(
     }
 }
 
-#[allow(unused_variables)]
-#[get("/<realm>/token?<code>")]
+#[get("/userinfo")]
+pub async fn get_default_userinfo(
+    claims: &State<ClaimsMutex>,
+    bearer: Bearer,
+) -> Result<Json<UserInfoClaims<Claims, CoreGenderClaim>>, NotFound<String>> {
+    get_userinfo(claims, bearer, "default".into()).await
+}
+
+#[options("/userinfo")]
+pub async fn options_default_userinfo() {}
+
+#[options("/<_realm>/userinfo")]
+pub async fn options_userinfo(_realm: String) {}
+
+#[get("/<_realm>/token?<code>")]
 pub fn get_token(
     tokens: &State<Tokens>,
-    realm: String,
+    _realm: String,
     code: String,
 ) -> Result<Json<Web3TokenResponse>, NotFound<String>> {
     let mutex = tokens.bearer.lock().unwrap();
@@ -47,6 +60,14 @@ pub fn get_token(
         Some(token) => Ok(Json(token.clone())),
         _ => Err(NotFound("Invalid Code".to_string())),
     }
+}
+
+#[get("/token?<code>")]
+pub fn get_default_token(
+    tokens: &State<Tokens>,
+    code: String,
+) -> Result<Json<Web3TokenResponse>, NotFound<String>> {
+    get_token(tokens, "default".into(), code)
 }
 
 #[get(
@@ -115,6 +136,9 @@ mod tests {
     use crate::rocket;
     use rocket::http::{Header, Status};
     use rocket::local::blocking::Client;
+    use serde_json::Value;
+    use std::collections::HashMap;
+    use url::Url;
 
     #[test]
     fn test_no_userinfo() {
@@ -174,11 +198,54 @@ mod tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
-        assert!(response
-            .headers()
-            .get("Location")
-            .next()
-            .unwrap()
-            .starts_with("https://example.com/?code="));
+        let response_url = Url::parse(response.headers().get("Location").next().unwrap()).unwrap();
+
+        let params: HashMap<String, String> = response_url
+            .query()
+            .map(|v| {
+                url::form_urlencoded::parse(v.as_bytes())
+                    .into_owned()
+                    .collect()
+            })
+            .unwrap_or_else(HashMap::new);
+
+        assert!(params.get("code").is_some());
+        let code = params.get("code").unwrap();
+        let response = client.get(format!("/token?code={}", code)).dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        let response = client
+            .get(format!("/nft/okt/token?code={}", code))
+            .dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        let token = response.into_json::<Value>().unwrap();
+        let access_token = token.get("access_token");
+        assert!(access_token.is_some());
+        let access_token = access_token.unwrap().as_str().unwrap().to_string();
+
+        let response = client
+            .get(format!("/token?code={}", "invalid".to_string()))
+            .dispatch();
+        assert_eq!(response.status(), Status::NotFound);
+
+        let response = client.get("/userinfo").dispatch();
+        assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert_eq!(response.headers().get("Location").next(), Some("/400.html"));
+
+        let response = client
+            .get("/userinfo")
+            .header(Header::new(
+                "Authorization",
+                format!("Bearer {}", access_token),
+            ))
+            .dispatch();
+        assert_ne!(response.status(), Status::BadRequest);
+        let userinfo = response.into_json::<Value>().unwrap();
+
+        assert_eq!(userinfo.get("account").unwrap().as_str().unwrap(), account);
+        assert_eq!(
+            userinfo.get("contract").unwrap().as_str().unwrap(),
+            contract
+        );
+        assert_eq!(userinfo.get("nonce").unwrap().as_str().unwrap(), nonce);
     }
 }

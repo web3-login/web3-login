@@ -32,7 +32,11 @@ pub async fn is_nft_owner_of(
     let transport = web3::transports::Http::new(&node_provider).unwrap();
     let web3 = web3::Web3::new(transport);
     let abi = include_bytes!("erc721.json");
-    let contract_address = Address::from_str(&contract_address).unwrap();
+
+    let contract_address = match Address::from_str(&contract_address) {
+        Ok(address) => address,
+        Err(e) => return Err(web3::Error::InvalidResponse(e.to_string())),
+    };
     let contract = Contract::from_json(web3.eth(), contract_address, abi).unwrap();
 
     let owner_address = Address::from_str(&owner_address).unwrap();

@@ -143,7 +143,11 @@ pub fn rocket() -> _ {
                 get_providers,
                 get_realms,
                 get_frontend,
-                endpoints::get_default_authorize
+                endpoints::get_default_authorize,
+                endpoints::get_default_userinfo,
+                endpoints::options_default_userinfo,
+                endpoints::options_userinfo,
+                endpoints::get_default_token
             ],
         )
         .mount(
