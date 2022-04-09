@@ -7,6 +7,7 @@ use openidconnect::{
     AuthUrl, EmptyAdditionalProviderMetadata, IssuerUrl, JsonWebKeySetUrl, ResponseTypes, Scope,
     TokenUrl, UserInfoUrl,
 };
+use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::status::NotFound;
 use rocket::response::Redirect;
@@ -22,6 +23,15 @@ use crate::bearer::Bearer;
 
 pub mod account_endpoints;
 pub mod nft_endpoints;
+
+#[derive(FromForm)]
+pub struct PostData {
+    pub grant_type: Option<String>,
+    pub code: String,
+    pub client_id: Option<String>,
+    pub client_secret: Option<String>,
+    pub redirect_uri: String,
+}
 
 #[get("/<realm>/jwk")]
 pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
@@ -128,6 +138,14 @@ pub fn get_default_token(
     code: String,
 ) -> Result<Json<Web3TokenResponse>, NotFound<String>> {
     get_token(tokens, "default".into(), code)
+}
+
+#[post("/token", data = "<post_data>")]
+pub async fn post_default_token_endpoint(
+    tokens: &State<Tokens>,
+    post_data: Form<PostData>,
+) -> Result<Json<Web3TokenResponse>, NotFound<String>> {
+    get_default_token(tokens, post_data.code.clone())
 }
 
 #[get(
