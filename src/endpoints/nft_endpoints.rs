@@ -189,8 +189,6 @@ pub async fn get_authorize(
     )
     .await;
 
-    println!("{:?}", access_token.secret());
-    println!("{:?}", code.secret());
     let id_token = token.id_token().unwrap().to_string();
 
     tokens
@@ -366,7 +364,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
-        //assert_eq!(response.into_string().unwrap(), "wrong redirect uri");
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/400.html?message=wrong%20redirect%20uri"
+        );
     }
 
     #[test]
@@ -481,6 +482,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/400.html?message=nonce%20missing"
+        );
 
         let response = client
             .get(format!(
@@ -489,6 +494,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/400.html?message=signature%20missing"
+        );
 
         let response = client
             .get(format!(
@@ -497,6 +506,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/400.html?message=signature%20missing"
+        );
     }
 
     #[test]
@@ -516,6 +529,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/401.html"
+        );
     }
 
     #[test]
@@ -535,7 +552,10 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
-        //assert_eq!(response.into_string().unwrap(), "account is no owner");
+        assert_eq!(
+            response.headers().get("Location").next().unwrap(),
+            "/401.html"
+        );
     }
 
     #[test]
@@ -555,5 +575,11 @@ mod authorize_tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::TemporaryRedirect);
+        assert!(response
+            .headers()
+            .get("Location")
+            .next()
+            .unwrap()
+            .starts_with("https://example.com/?code="));
     }
 }

@@ -75,7 +75,6 @@ pub fn get_oauth_authorization_server(
     get_openid_configuration(config, realm)
 }
 
-
 #[get(
     "/<realm>/authorize?<client_id>&<redirect_uri>&<state>&<response_type>&<response_mode>&<nonce>&<account>&<signature>&<chain_id>&<contract>"
 )]
@@ -126,7 +125,7 @@ pub async fn get_authorize(
     let authorize = Web3Authorize {
         account: account.clone(),
         nonce: nonce.clone(),
-        signature: signature.clone()
+        signature: signature.clone(),
     };
 
     match authorize.authorize().await {

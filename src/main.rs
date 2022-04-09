@@ -138,7 +138,13 @@ pub fn rocket() -> _ {
         )
         .mount(
             "/",
-            routes![default_index, get_providers, get_realms, get_frontend],
+            routes![
+                default_index,
+                get_providers,
+                get_realms,
+                get_frontend,
+                endpoints::get_default_authorize
+            ],
         )
         .mount(
             "/account/",
