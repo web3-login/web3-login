@@ -173,7 +173,6 @@ pub async fn get_authorize(
 
     let token = token(
         config,
-        realm,
         client_id,
         nonce,
         standard_claims,

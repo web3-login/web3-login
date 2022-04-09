@@ -31,7 +31,6 @@ pub struct Tokens {
 
 pub async fn token(
     config: &Config,
-    realm: String,
     client_id: String,
     _nonce: Option<String>,
     standard_claims: StandardClaims<CoreGenderClaim>,
@@ -42,7 +41,7 @@ pub async fn token(
     let rsa_pem = config.rsa_pem.clone();
     let id_token = IdToken::new(
         IdTokenClaims::new(
-            IssuerUrl::new(format!("{}/{}", config.ext_hostname, realm)).unwrap(),
+            IssuerUrl::new(config.ext_hostname.to_string()).unwrap(),
             vec![Audience::new(client_id)],
             Utc::now() + Duration::seconds(300),
             Utc::now(),
