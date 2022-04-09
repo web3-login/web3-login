@@ -1,11 +1,20 @@
+use openidconnect::core::{
+    CoreClaimName, CoreJwsSigningAlgorithm, CoreProviderMetadata, CoreResponseType,
+    CoreSubjectIdentifierType,
+};
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
+use openidconnect::{
+    AuthUrl, EmptyAdditionalProviderMetadata, IssuerUrl, JsonWebKeySetUrl, ResponseTypes, Scope,
+    TokenUrl, UserInfoUrl,
+};
 use rocket::http::Status;
 use rocket::response::status::NotFound;
 use rocket::response::Redirect;
-use rocket::serde::json::Json;
+use rocket::serde::json::{Json, Value};
 use rocket::State;
 use web3_login::claims::{Claims, ClaimsMutex};
 use web3_login::config::Config;
+use web3_login::jwk::jwk;
 use web3_login::token::{Tokens, Web3TokenResponse};
 use web3_login::userinfo::userinfo;
 
@@ -13,6 +22,57 @@ use crate::bearer::Bearer;
 
 pub mod account_endpoints;
 pub mod nft_endpoints;
+
+#[get("/<realm>/jwk")]
+pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
+    Json(jwk(config, realm))
+}
+
+#[get("/jwk")]
+pub fn get_default_jwk(config: &State<Config>) -> Json<Value> {
+    Json(jwk(config, "default".into()))
+}
+
+#[get("/.well-known/openid-configuration")]
+pub fn get_openid_configuration(config: &State<Config>) -> Json<Value> {
+    let provider_metadata = CoreProviderMetadata::new(
+        IssuerUrl::new(config.ext_hostname.to_string()).unwrap(),
+        AuthUrl::new(format!("{}/authorize", config.ext_hostname)).unwrap(),
+        JsonWebKeySetUrl::new(format!("{}/jwk", config.ext_hostname)).unwrap(),
+        vec![
+            ResponseTypes::new(vec![CoreResponseType::Code]),
+            ResponseTypes::new(vec![CoreResponseType::Token, CoreResponseType::IdToken]),
+        ],
+        vec![CoreSubjectIdentifierType::Pairwise],
+        vec![CoreJwsSigningAlgorithm::RsaSsaPssSha256],
+        EmptyAdditionalProviderMetadata {},
+    )
+    .set_token_endpoint(Some(
+        TokenUrl::new(format!("{}/token", config.ext_hostname)).unwrap(),
+    ))
+    .set_userinfo_endpoint(Some(
+        UserInfoUrl::new(format!("{}/userinfo", config.ext_hostname)).unwrap(),
+    ))
+    .set_scopes_supported(Some(vec![
+        Scope::new("openid".to_string()),
+        Scope::new("nft".to_string()),
+    ]))
+    .set_claims_supported(Some(vec![
+        CoreClaimName::new("sub".to_string()),
+        CoreClaimName::new("aud".to_string()),
+        CoreClaimName::new("exp".to_string()),
+        CoreClaimName::new("iat".to_string()),
+        CoreClaimName::new("iss".to_string()),
+        CoreClaimName::new("name".to_string()),
+    ]));
+
+    Json(serde_json::to_value(&provider_metadata).unwrap())
+}
+
+#[get("/.well-known/oauth-authorization-server/authorize")]
+pub fn get_oauth_authorization_server(config: &State<Config>) -> Json<Value> {
+    get_openid_configuration(config)
+}
 
 #[allow(unused_variables)]
 #[get("/<realm>/userinfo")]
@@ -155,6 +215,17 @@ mod tests {
             ))
             .dispatch();
         assert_eq!(response.status(), Status::NotFound);
+    }
+
+    #[test]
+    fn test_openid_configuration() {
+        let client = Client::tracked(rocket()).expect("valid rocket instance");
+        let response = client.get("/.well-known/openid-configuration").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        let response = response.into_json::<Value>().unwrap();
+
+        assert!(response.get("issuer").is_some());
+        assert!(response.get("jwks_uri").is_some());
     }
 
     #[test]

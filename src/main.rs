@@ -143,8 +143,10 @@ pub fn rocket() -> _ {
                 get_providers,
                 get_realms,
                 get_frontend,
+                endpoints::get_default_jwk,
                 endpoints::get_default_authorize,
                 endpoints::get_default_userinfo,
+                endpoints::get_openid_configuration,
                 endpoints::options_default_userinfo,
                 endpoints::options_userinfo,
                 endpoints::get_default_token
@@ -158,7 +160,9 @@ pub fn rocket() -> _ {
             "/account/",
             routes![
                 index,
-                account_endpoints::get_jwk,
+                endpoints::get_jwk,
+                endpoints::get_default_jwk,
+                endpoints::get_oauth_authorization_server,
                 account_endpoints::get_openid_configuration,
                 account_endpoints::get_oauth_authorization_server,
                 endpoints::get_userinfo,
@@ -175,7 +179,8 @@ pub fn rocket() -> _ {
             "/nft/",
             routes![
                 index,
-                nft_endpoints::get_jwk,
+                endpoints::get_jwk,
+                endpoints::get_default_jwk,
                 nft_endpoints::get_openid_configuration,
                 nft_endpoints::get_oauth_authorization_server,
                 endpoints::get_userinfo,

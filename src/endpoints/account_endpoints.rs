@@ -1,6 +1,6 @@
 use rocket::http::Status;
 use rocket::response::{content, Redirect};
-use rocket::serde::json::{Json, Value};
+use rocket::serde::json::Value;
 use rocket::State;
 
 use openidconnect::core::{
@@ -18,13 +18,7 @@ use uuid::Uuid;
 use web3_login::authorize::{Authorize, AuthorizeError, Web3Authorize};
 use web3_login::claims::{additional_claims, standard_claims, ClaimsMutex};
 use web3_login::config::{get_chain_id, get_node, Config};
-use web3_login::jwk::jwk;
 use web3_login::token::{token, Tokens};
-
-#[get("/<realm>/jwk")]
-pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
-    Json(jwk(config, realm))
-}
 
 #[get("/<realm>/.well-known/openid-configuration")]
 pub fn get_openid_configuration(config: &State<Config>, realm: String) -> content::Json<Value> {
