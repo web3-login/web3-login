@@ -33,14 +33,14 @@ pub struct PostData {
     pub redirect_uri: String,
 }
 
-#[get("/<realm>/jwk")]
-pub fn get_jwk(config: &State<Config>, realm: String) -> Json<Value> {
-    Json(jwk(config, realm))
+#[get("/<_realm>/jwk")]
+pub fn get_jwk(config: &State<Config>, _realm: String) -> Json<Value> {
+    get_default_jwk(config)
 }
 
 #[get("/jwk")]
 pub fn get_default_jwk(config: &State<Config>) -> Json<Value> {
-    Json(jwk(config, "default".into()))
+    Json(jwk(config).unwrap())
 }
 
 #[get("/.well-known/openid-configuration")]

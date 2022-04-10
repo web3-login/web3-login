@@ -23,7 +23,8 @@ impl fmt::Display for AuthorizeError {
     }
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "wasm"), async_trait)]
+#[cfg_attr(feature="wasm", async_trait(?Send))]
 pub trait Authorize {
     fn get_account(&self) -> &Option<String>;
     fn get_nonce(&self) -> &Option<String>;
@@ -71,7 +72,8 @@ pub struct Web3Authorize {
     pub signature: Option<String>,
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "wasm"), async_trait)]
+#[cfg_attr(feature="wasm", async_trait(?Send))]
 impl Authorize for Web3Authorize {
     fn get_account(&self) -> &Option<String> {
         &self.account
@@ -108,7 +110,8 @@ impl NFTAuthorize {
     }
 }
 
-#[async_trait]
+#[cfg_attr(not(feature = "wasm"), async_trait)]
+#[cfg_attr(feature="wasm", async_trait(?Send))]
 impl Authorize for NFTAuthorize {
     fn get_account(&self) -> &Option<String> {
         &self.account
