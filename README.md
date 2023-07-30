@@ -103,3 +103,20 @@ docker run -d -p 8080:8080 --name web3-login ghcr.io/web3-login/web3-login/web3-
 | Evmos Testnet (9000)           | /evmos/authorize        | 0xf141C38096539185efbca485Eb858Bd274a6651c | https://market.nft-login.net/                              | https://faucet.evmos.org/                                                                     |     |
 |                                |                         |                                            |                                                            |                                                                                               |     |
 |                                |                         |                                            |                                                            |                                                                                               |     |
+## Frequently Asked Questions (FAQs)
+
+### What if the Web3-Login domain is not renewed or there are issues with hosting? Can I host `oidc.web3-login.net` on my own server?
+
+#### Answer:
+
+Absolutely! The resilience and decentralization principle behind Web3-Login means you're not locked into relying solely on our infrastructure.
+
+Web3-Login is constructed atop the OpenID Connect (OIDC) framework. This enables anyone to host the OIDC server on their own infrastructure. So, even if there were issues with our primary domain, you can seamlessly transition by setting up the OIDC server on a different domain and pointing your application there.
+
+To achieve this, you would:
+1. Host the OIDC server on your chosen domain or server.
+2. Update your OpenID Connect client's configuration to refer to your new domain.
+
+It's all about giving you the control. The decentralization aspect ensures that the login process remains robust and reliable, irrespective of potential disruptions to our primary service. 
+
+For a practical example, when setting up on your own domain, you'll need to replace the Authorize URI in the [example config](https://web3-login.net/#/config) with your server's domain.
