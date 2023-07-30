@@ -11,7 +11,7 @@ pub fn validate_signature(account: String, nonce: String, signature: String) -> 
     if signature.len() < 2 {
         return false;
     }
-    let signature = (&signature[2..]).to_string();
+    let signature = (signature[2..]).to_string();
     let signature = hex::decode(signature);
     if signature.is_err() {
         return false;

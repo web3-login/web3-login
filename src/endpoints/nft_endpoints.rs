@@ -1,6 +1,6 @@
 use rocket::http::Status;
-use rocket::response::{content, Redirect};
-use rocket::serde::json::Value;
+use rocket::response::Redirect;
+use rocket::serde::json::{Json, Value};
 use rocket::State;
 
 use openidconnect::core::{
@@ -20,7 +20,7 @@ use web3_login::config::{get_chain_id, get_node, Config};
 use web3_login::token::{token, Tokens};
 
 #[get("/<realm>/.well-known/openid-configuration")]
-pub fn get_openid_configuration(config: &State<Config>, realm: String) -> content::Json<Value> {
+pub fn get_openid_configuration(config: &State<Config>, realm: String) -> Json<Value> {
     let provider_metadata = CoreProviderMetadata::new(
         IssuerUrl::new(format!("{}/nft/{}", config.ext_hostname, realm)).unwrap(),
         AuthUrl::new(format!("{}/nft/{}/authorize", config.ext_hostname, realm)).unwrap(),
@@ -49,14 +49,11 @@ pub fn get_openid_configuration(config: &State<Config>, realm: String) -> conten
         CoreClaimName::new("name".to_string()),
     ]));
 
-    content::Json(serde_json::to_value(&provider_metadata).unwrap())
+    Json(serde_json::to_value(provider_metadata).unwrap())
 }
 
 #[get("/.well-known/oauth-authorization-server/<realm>/authorize")]
-pub fn get_oauth_authorization_server(
-    config: &State<Config>,
-    realm: String,
-) -> content::Json<Value> {
+pub fn get_oauth_authorization_server(config: &State<Config>, realm: String) -> Json<Value> {
     get_openid_configuration(config, realm)
 }
 

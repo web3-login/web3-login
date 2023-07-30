@@ -6,7 +6,10 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.1.0"
+version = "0.1.1"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["account", "bin"]
@@ -16,15 +19,20 @@ bin = ["rocket", "rocket-include-static-resources", "tokio"]
 wasm = ["web3/wasm"]
 
 [dependencies]
-async-trait = "0.1.53"
+async-trait = "0.1.72"
 chrono = "0.4"
 hex = "0.4"
-openidconnect = { version="2.2" }
-rocket = {version = "0.5.0-rc.1", features = ["json"], optional = true}
-rocket-include-static-resources = {version = "0.10", features = ["cache"], optional = true}
-serde = {version = "1.0", features = ["derive"]}
+openidconnect = { version = "3.3" }
+rocket = { version = "0.5.0-rc.3", features = ["json"], optional = true }
+rocket-include-static-resources = { version = "0.10", features = [
+    "cache",
+], optional = true }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = {version = "1.17", features = ["full"], optional = true }
-url = "2.2"
+tokio = { version = "1.29", features = ["full"], optional = true }
+url = "2.4"
 uuid = { version = "0.8", features = ["serde", "v4"] }
-web3 = {version = "0.18", default-features = false, features = ["signing", "http-rustls-tls"], optional = true}
+web3 = { version = "0.19", default-features = false, features = [
+    "signing",
+    "http-rustls-tls",
+], optional = true }

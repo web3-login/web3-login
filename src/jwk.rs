@@ -12,7 +12,7 @@ pub fn jwk(config: &Config) -> Result<Value, Box<dyn Error>> {
     )?
     .as_verification_key()]);
 
-    Ok(serde_json::to_value(&jwks)?)
+    Ok(serde_json::to_value(jwks)?)
 }
 
 #[cfg(test)]

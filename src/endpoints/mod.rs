@@ -76,7 +76,7 @@ pub fn get_openid_configuration(config: &State<Config>) -> Json<Value> {
         CoreClaimName::new("name".to_string()),
     ]));
 
-    Json(serde_json::to_value(&provider_metadata).unwrap())
+    Json(serde_json::to_value(provider_metadata).unwrap())
 }
 
 #[get("/.well-known/oauth-authorization-server/authorize")]
