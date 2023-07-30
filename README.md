@@ -4,32 +4,72 @@
 [![codecov](https://codecov.io/gh/web3-login/web3-login/branch/main/graph/badge.svg?token=0QLPT8IY0F)](https://codecov.io/gh/web3-login/web3-login)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-oidc provider using web3 technologies
+**Web3-Login** is a decentralized OpenID Connect (OIDC) provider leveraging web3 technologies. Unlike centralized authentication systems, it offers a seamless authentication experience using your Ethereum address. No personal data or passwords required—just sign the transaction and you're authenticated!
 
-## quickstart
+## Why Web3 Login?
+
+The internet today largely relies on identity-based access rather than ownership-based access authorization. Web3-Login bridges this gap. It uses Ethereum addresses as identities and verifies the ownership of NFTs to grant access to services. In essence, it embodies the core principle of web3: decentralization.
+
+### Inspiration
+
+Our inspiration stems from the realization that most online services today hinge on identities instead of actual ownership of access authorization. This paradigm shift, from identity to ownership, inspired us to create Web3-Login. The service uses Ethereum addresses as a form of identity, but it's the ownership of an NFT that grants access to the various online services.
+
+### What does it do?
+
+Web3-Login revolutionizes the traditional login mechanism. Instead of usernames and passwords, it uses web3 keys (public/private key pairs) and NFTs. Developers can thus integrate a novel login functionality into their projects, allowing users to use their crypto wallets for authentication.
+
+To get started, all you need is a Web3 wallet such as MetaMask or Coinbase. No separate username or password. Just choose your Web3 wallet from the list, and sign your transactions.
+
+## Quickstart
+
+To get started with web3-login, you can follow these steps to build and run the application:
 
 ```sh
-cargo build
-cargo test
-cargo run
+cargo build   # Build the project
+cargo test    # Run tests
+cargo run     # Start the web3-login service
 ```
 
-## cloudflare argo tunnel and docker
+## Using Cloudflare Argo Tunnel with Docker
+
+Cloudflare Argo Tunnel provides a secure way to connect your infrastructure to the Cloudflare network without exposing public IPs. By integrating it with the `web3-login` service, you can achieve improved performance and security for user authentication. It's especially beneficial for projects where identity and privacy matter.
+
+### Setting up Cloudflare Argo Tunnel
+
+1. Create a new tunnel for your service:
+   ```sh
+   cloudflared tunnel create oidc-web3-login
+   ```
+
+2. Move the generated JSON (your tunnel credentials) to the `.cloudflared` directory:
+   ```sh
+   cp changeme-e246.json .cloudflared/
+   ```
+
+3. Update the tunnel settings in your `.cloudflared/config.yml`:
+   ```yml
+   url: http://provider:8080
+   tunnel: changeme-e246
+   credentials-file: /etc/cloudflared/changeme-e246.json
+   ```
+
+### Running with Docker
+
+With the configurations in place, you can now run the `web3-login` service along with Cloudflare Argo Tunnel using Docker Compose:
 
 ```sh
-cloudflared tunnel create oidc-web3-login
-cp changeme-e246.json .cloudflared/
+docker-compose up -d
 ```
 
-Update tunnel and credentials-file in `.cloudflared/config.yml`.
+### Optional: Running web3-login in Docker without Docker Compose
 
-```yml
-url: http://provider:8080
-tunnel: changeme-e246
-credentials-file: /etc/cloudflared/changeme-e246.json
+If you wish to run the `web3-login` service without Docker Compose, you can use the following `docker run` command:
+
+```sh
+docker run -d -p 8080:8080 --name web3-login ghcr.io/web3-login/web3-login/web3-login:latest
 ```
 
-Now you can run `docker-compose up -d`.
+**Note**: Ensure the configurations and required volumes are appropriately set if you're opting for this method.
 
 ## Claims
 
