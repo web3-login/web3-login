@@ -1,5 +1,30 @@
-use crate::claims::{Claims, ClaimsMutex};
+use std::error::Error;
+
+use crate::{
+    claims::{Claims, ClaimsMutex},
+    traits::UserInfoTrait,
+};
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
+
+#[derive(Clone)]
+pub struct UserInfoImpl {
+    claims: ClaimsMutex,
+}
+
+impl UserInfoImpl {
+    pub fn new(claims: ClaimsMutex) -> Self {
+        Self { claims }
+    }
+}
+
+impl UserInfoTrait for UserInfoImpl {
+    fn userinfo(
+        &self,
+        access_token: String,
+    ) -> Result<Option<UserInfoClaims<Claims, CoreGenderClaim>>, Box<dyn Error>> {
+        Ok(userinfo(&self.claims, access_token))
+    }
+}
 
 pub fn userinfo(
     claims: &ClaimsMutex,

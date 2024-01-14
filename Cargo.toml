@@ -6,7 +6,7 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.1.1"
+version = "0.2.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -20,6 +20,8 @@ wasm = ["web3/wasm"]
 
 [dependencies]
 async-trait = "0.1.72"
+axum = "0.7"
+axum-auth = { version = "0.7", default-features = false, features = ["auth-bearer"] }
 chrono = "0.4"
 futures = "0.3"
 hex = "0.4"
@@ -37,3 +39,9 @@ web3 = { version = "0.19", default-features = false, features = [
     "signing",
     "http-rustls-tls",
 ], optional = true }
+
+[dev-dependencies]
+axum-test = "14.0.0"
+tempfile = "3.8.1"
+tokio = { version = "1.0", features = ["full", "test-util"] }
+tower = "0.4.13"

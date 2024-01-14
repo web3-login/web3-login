@@ -4,6 +4,23 @@ use serde_json::Value;
 use std::error::Error;
 
 use crate::config::Config;
+use crate::traits::JWKTrait;
+
+pub struct JWKImpl {
+    config: Config,
+}
+
+impl JWKImpl {
+    pub fn new(config: Config) -> Self {
+        Self { config }
+    }
+}
+
+impl JWKTrait for JWKImpl {
+    fn jwk(&self) -> Result<Value, Box<dyn Error>> {
+        jwk(&self.config)
+    }
+}
 
 pub fn jwk(config: &Config) -> Result<Value, Box<dyn Error>> {
     let jwks = CoreJsonWebKeySet::new(vec![CoreRsaPrivateSigningKey::from_pem(

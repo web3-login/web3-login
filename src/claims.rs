@@ -16,6 +16,7 @@ pub struct Claims {
 
 impl AdditionalClaims for Claims {}
 
+#[derive(Clone)]
 pub struct ClaimsMutex {
     pub standard_claims: Arc<Mutex<HashMap<String, StandardClaims<CoreGenderClaim>>>>,
     pub additional_claims: Arc<Mutex<HashMap<String, Claims>>>,
