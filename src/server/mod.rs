@@ -9,6 +9,7 @@ use crate::{
     well_known::WellKnownImpl,
 };
 use axum::{
+    response::IntoResponse,
     routing::{get, options, post},
     Router,
 };
@@ -17,6 +18,7 @@ use std::{
     error::Error,
     sync::{Arc, Mutex},
 };
+use tower_http::services::{ServeDir, ServeFile};
 
 use self::routes::{
     get_authorize, get_authorize_configuration, get_jwk, get_openid_configuration, get_token,
@@ -55,6 +57,12 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         .route("/:realm/token", post(post_token))
         .route("/authorize", get(get_authorize))
         .route("/:realm/authorize", get(get_authorize))
+        .nest_service("/index.html", ServeFile::new("static/index.html"))
+        .nest_service("/favicon.ico", ServeFile::new("static/favicon.ico"))
+        .nest_service("/index.css", ServeDir::new("static/index.css"))
+        .nest_service("/index.js", ServeDir::new("static/index.js"))
+        .nest_service("/400.html", ServeFile::new("static/400.html"))
+        .nest_service("/401.html", ServeFile::new("static/401.html"))
         .with_state(app);
     Ok(router)
 }
