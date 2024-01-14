@@ -5,3 +5,6 @@ pub mod jwk;
 pub mod token;
 pub mod userinfo;
 pub mod web3;
+
+pub mod nft_owner;
+pub mod signature_validator;

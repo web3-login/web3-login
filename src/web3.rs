@@ -6,6 +6,30 @@ use web3::{
     types::{Address, U256},
 };
 
+use crate::nft_owner::NFTOwner;
+use crate::signature_validator::SignatureValidator;
+
+pub struct Web3 {}
+
+impl SignatureValidator for Web3 {
+    fn validate_signature(&self, account: String, nonce: String, signature: String) -> bool {
+        validate_signature(account, nonce, signature)
+    }
+}
+
+impl NFTOwner for Web3 {
+    fn is_nft_owner(
+        &self,
+        contract: String,
+        account: String,
+        _nft: Option<String>,
+        chain: String,
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        let rt = tokio::runtime::Runtime::new()?;
+        Ok(rt.block_on(is_nft_owner_of(contract, account, chain))?)
+    }
+}
+
 pub fn validate_signature(account: String, nonce: String, signature: String) -> bool {
     let message = eth_message(format!("{};{}", account, nonce));
     if signature.len() < 2 {
@@ -169,5 +193,29 @@ mod tests {
                 .await
                 .unwrap()
         );
+    }
+
+    #[test]
+    fn test_nft_owner() {
+        let rocket = rocket::build();
+        let figment = rocket.figment();
+        let config: crate::config::Config = figment.extract().expect("config");
+
+        let nft_addr = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4".to_string();
+        let owner = "0x9c9E8eAbD947658bDb713E0d3eBfe56860abdb8D".to_string();
+        let web3 = Web3 {};
+        assert!(web3
+            .is_nft_owner(nft_addr, owner, None, config.node_provider["okt"].clone())
+            .unwrap());
+    }
+
+    #[test]
+    fn test_validate_signature() {
+        let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+        let nonce = "dotzxrenodo".to_string();
+        let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();
+
+        let web3 = Web3 {};
+        assert!(web3.validate_signature(account, nonce, signature));
     }
 }
