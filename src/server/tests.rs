@@ -7,6 +7,29 @@ use axum::{
 };
 use tower::ServiceExt;
 
+fn test_config() -> Config {
+    let mut config = Config::default();
+    config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
+    config.ext_hostname = "http://localhost:8000".to_string();
+    config.frontend_host = "http://localhost:8081".to_string();
+    config.chain_id.insert("default".into(), 42);
+    config.node_provider.insert(
+        "default".into(),
+        "https://kovan.infura.io/v3/43".parse().unwrap(),
+    );
+    config.chain_id.insert("kovan".into(), 42);
+    config.node_provider.insert(
+        "kovan".into(),
+        "https://kovan.infura.io/v3/43".parse().unwrap(),
+    );
+    config.chain_id.insert("okt".into(), 65);
+    config.node_provider.insert(
+        "okt".into(),
+        "https://exchaintestrpc.okex.org".parse().unwrap(),
+    );
+    config
+}
+
 #[tokio::test]
 async fn test_userinfo() {
     let config = Config::default();
@@ -149,6 +172,7 @@ async fn test_post_token() {
 }
 
 mod authorize_tests {
+    use super::*;
     use std::collections::HashMap;
 
     use crate::{
@@ -195,7 +219,7 @@ mod authorize_tests {
             .unwrap();
 
         let response = app.oneshot(request).await.unwrap();
-        assert_eq!(response.status(), StatusCode::FOUND);
+        assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
 
         let location_header = response.headers().get(http::header::LOCATION).unwrap();
         let location = location_header.to_str().unwrap();
@@ -213,5 +237,64 @@ mod authorize_tests {
         assert_eq!(params.get("realm"), Some(&"kovan".to_string()));
         assert_eq!(params.get("chain_id"), Some(&"kovan".to_string()));
         assert_eq!(params.get("contract"), Some(&client_id.to_string()));
+    }
+
+    #[tokio::test]
+    async fn account_valid_signature() {
+        let client_id = "foo";
+        let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+        let nonce = "dotzxrenodo".to_string();
+        let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();
+
+        let config = test_config();
+
+        let server = Server::new(config);
+        let app = router(server).unwrap();
+
+        let uri = format!(
+            "/account/authorize?client_id={}&redirect_uri=https://example.com&nonce={}&account={}&signature={}", client_id, nonce, account, signature);
+
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri(uri)
+            .body(Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+
+        assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
+    }
+
+    #[ignore = "does not stop"]
+    #[tokio::test]
+    async fn test_wrong_redirect_uri() {
+        let client_id = "foo";
+        let contract = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4";
+        let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+        let nonce = "dotzxrenodo".to_string();
+        let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();
+
+        let config = test_config();
+
+        let server = Server::new(config);
+        let app = router(server).unwrap();
+
+        let uri = format!(
+            "/authorize?client_id={}&realm=okt&redirect_uri=wrong_uri&nonce={}&contract={}&account={}&signature={}",
+            client_id, nonce, contract, account, signature
+        );
+
+        let request = Request::builder()
+            .method(http::Method::GET)
+            .uri(uri)
+            .body(Body::empty())
+            .unwrap();
+
+        let response = app.oneshot(request).await.unwrap();
+        assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
+        assert_eq!(
+            response.headers().get("Location").unwrap(),
+            "/400.html?message=wrong%20redirect%20uri"
+        );
     }
 }

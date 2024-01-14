@@ -104,7 +104,7 @@ pub async fn get_authorize(
     params: Query<AuthorizeParams>,
 ) -> impl IntoResponse {
     match app.authorize(
-        None,
+        params.realm.clone(),
         params.client_id.clone(),
         params.redirect_uri.clone(),
         params.state.clone(),
