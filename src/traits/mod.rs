@@ -16,3 +16,9 @@ pub trait UserInfoTrait: Send + Sync {
 pub trait JWKTrait: Send + Sync {
     fn jwk(&self) -> Result<Value, Box<dyn Error>>;
 }
+
+pub trait WellKnownTrait: Send + Sync {
+    fn openid_configuration(&self) -> Result<Value, Box<dyn Error>>;
+
+    fn authorize(&self) -> Result<Value, Box<dyn Error>>;
+}

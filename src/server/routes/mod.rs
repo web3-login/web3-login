@@ -23,3 +23,19 @@ pub async fn get_jwk(app: State<Server>) -> Result<Json<serde_json::Value>, Stat
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
+
+pub async fn get_openid_configuration(
+    app: State<Server>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    match app.openid_configuration() {
+        Ok(openid_configuration) => Ok(Json(openid_configuration)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+pub async fn get_authorize(app: State<Server>) -> Result<Json<serde_json::Value>, StatusCode> {
+    match app.authorize() {
+        Ok(authorize) => Ok(Json(authorize)),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}

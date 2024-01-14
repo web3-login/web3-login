@@ -2,8 +2,9 @@ use crate::{
     claims::ClaimsMutex,
     config::Config,
     jwk::JWKImpl,
-    traits::{JWKTrait, OIDCTrait, UserInfoTrait},
+    traits::{JWKTrait, OIDCTrait, UserInfoTrait, WellKnownTrait},
     userinfo::UserInfoImpl,
+    well_known::WellKnownImpl,
 };
 use axum::{routing::get, Router};
 use std::{
@@ -12,7 +13,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use self::routes::{get_jwk, get_user_info};
+use self::routes::{get_authorize, get_jwk, get_openid_configuration, get_user_info};
 
 pub mod routes;
 
@@ -20,6 +21,14 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
     let router = Router::new()
         .route("/userinfo", get(get_user_info))
         .route("/jwk", get(get_jwk))
+        .route(
+            "/.well-known/openid-configuration",
+            get(get_openid_configuration),
+        )
+        .route(
+            "/.well-known/oauth-authorization-server/authorize",
+            get(get_authorize),
+        )
         .with_state(app);
     Ok(router)
 }
@@ -30,6 +39,7 @@ pub struct Server {
     claims: ClaimsMutex,
     user_info: Arc<Box<dyn UserInfoTrait>>,
     jwk: Arc<Box<dyn JWKTrait>>,
+    well_known: Arc<Box<dyn WellKnownTrait>>,
 }
 
 impl OIDCTrait for Server {}
@@ -44,11 +54,14 @@ impl Server {
             Arc::new(Box::new(UserInfoImpl::new(claims.clone())));
         let jwk: Arc<Box<dyn JWKTrait>> = Arc::new(Box::new(JWKImpl::new(config.clone())));
 
+        let well_known: Arc<Box<dyn WellKnownTrait>> =
+            Arc::new(Box::new(WellKnownImpl::new(config.clone())));
         Self {
             config,
             claims,
             user_info,
             jwk,
+            well_known,
         }
     }
 }
@@ -76,45 +89,15 @@ impl UserInfoTrait for Server {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::{
-        body::Body,
-        http::{Request, StatusCode},
-    };
-    use tower::ServiceExt;
-
-    #[tokio::test]
-    async fn test_router() {
-        let config = Config::default();
-        let server = Server::new(config);
-        let router = router(server).unwrap();
-
-        let req = Request::builder()
-            .method("GET")
-            .uri("/userinfo")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = router.oneshot(req).await.unwrap();
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+impl WellKnownTrait for Server {
+    fn openid_configuration(&self) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.well_known.openid_configuration()
     }
 
-    #[tokio::test]
-    async fn test_jwk() {
-        let mut config = Config::default();
-        config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
-        let server = Server::new(config);
-        let router = router(server).unwrap();
-
-        let req = Request::builder()
-            .method("GET")
-            .uri("/jwk")
-            .body(Body::empty())
-            .unwrap();
-
-        let response = router.oneshot(req).await.unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
+    fn authorize(&self) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.well_known.authorize()
     }
 }
+
+#[cfg(test)]
+mod tests;

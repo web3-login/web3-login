@@ -11,3 +11,4 @@ pub mod signature_validator;
 
 pub mod server;
 pub mod traits;
+pub mod well_known;
