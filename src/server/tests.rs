@@ -1,3 +1,5 @@
+use crate::server::routes::TokenParams;
+
 use super::*;
 use axum::{
     body::Body,
@@ -6,7 +8,7 @@ use axum::{
 use tower::ServiceExt;
 
 #[tokio::test]
-async fn test_router() {
+async fn test_userinfo() {
     let config = Config::default();
     let server = Server::new(config);
     let router = router(server).unwrap();
@@ -19,6 +21,22 @@ async fn test_router() {
 
     let response = router.oneshot(req).await.unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_options_user_info() {
+    let config = Config::default();
+    let server = Server::new(config);
+    let router = router(server).unwrap();
+
+    let req = Request::builder()
+        .method("OPTIONS")
+        .uri("/userinfo")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = router.oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]
@@ -81,8 +99,32 @@ async fn test_token() {
 
     let req = Request::builder()
         .method("GET")
-        .uri("/token")
+        .uri("/token?code=123456")
         .body(Body::empty())
+        .unwrap();
+
+    let response = router.oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_post_token() {
+    let mut config = Config::default();
+    config.ext_hostname = "https://example.com".to_string();
+    let server = Server::new(config);
+    let router = router(server).unwrap();
+
+    let token_params = TokenParams {
+        code: "123456".to_string(),
+    };
+    let json_body = serde_json::to_string(&token_params).unwrap();
+
+    // Construct the request
+    let req = Request::builder()
+        .method("POST")
+        .uri("/token")
+        .header("content-type", "application/json") // Set the content type to application/json
+        .body(Body::from(json_body))
         .unwrap();
 
     let response = router.oneshot(req).await.unwrap();

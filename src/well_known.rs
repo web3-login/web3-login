@@ -56,7 +56,7 @@ impl WellKnownTrait for WellKnownImpl {
         Ok(serde_json::to_value(provider_metadata)?)
     }
 
-    fn authorize(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn authorize_configuration(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         self.openid_configuration()
     }
 }

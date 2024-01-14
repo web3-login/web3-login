@@ -1,26 +1,35 @@
 use crate::{
+    authorize::AuthorizeImpl,
     claims::ClaimsMutex,
     config::Config,
     jwk::JWKImpl,
     token::{TokenImpl, Tokens},
-    traits::{JWKTrait, OIDCTrait, TokenTrait, UserInfoTrait, WellKnownTrait},
+    traits::{AuthorizeTrait, JWKTrait, OIDCTrait, TokenTrait, UserInfoTrait, WellKnownTrait},
     userinfo::UserInfoImpl,
     well_known::WellKnownImpl,
 };
-use axum::{routing::get, Router};
+use axum::{
+    routing::{get, options, post},
+    Router,
+};
 use std::{
     collections::HashMap,
     error::Error,
     sync::{Arc, Mutex},
 };
 
-use self::routes::{get_authorize, get_jwk, get_openid_configuration, get_token, get_user_info};
+use self::routes::{
+    get_authorize, get_authorize_configuration, 
+    get_jwk, get_openid_configuration, get_token,
+    get_user_info, options_user_info, post_token,
+};
 
 pub mod routes;
 
 pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
     let router = Router::new()
         .route("/userinfo", get(get_user_info))
+        .route("/userinfo", options(options_user_info))
         .route("/jwk", get(get_jwk))
         .route(
             "/.well-known/openid-configuration",
@@ -28,9 +37,11 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         )
         .route(
             "/.well-known/oauth-authorization-server/authorize",
-            get(get_authorize),
+            get(get_authorize_configuration),
         )
         .route("/token", get(get_token))
+        .route("/token", post(post_token))
+        .route("/authorize", get(get_authorize))
         .with_state(app);
     Ok(router)
 }
@@ -44,6 +55,7 @@ pub struct Server {
     jwk: Arc<Box<dyn JWKTrait>>,
     well_known: Arc<Box<dyn WellKnownTrait>>,
     token: Arc<Box<dyn TokenTrait>>,
+    authorize: Arc<Box<dyn AuthorizeTrait>>,
 }
 
 impl OIDCTrait for Server {}
@@ -69,6 +81,11 @@ impl Server {
 
         let token: Arc<Box<dyn TokenTrait>> = Arc::new(Box::new(TokenImpl::new(tokens.clone())));
 
+        let authorize: Arc<Box<dyn AuthorizeTrait>> = Arc::new(Box::new(AuthorizeImpl::new(
+            config.clone(),
+            claims.clone(),
+            tokens.clone(),
+        )));
         Self {
             config,
             claims,
@@ -77,6 +94,7 @@ impl Server {
             jwk,
             well_known,
             token,
+            authorize,
         }
     }
 }
@@ -109,8 +127,8 @@ impl WellKnownTrait for Server {
         self.well_known.openid_configuration()
     }
 
-    fn authorize(&self) -> Result<serde_json::Value, Box<dyn Error>> {
-        self.well_known.authorize()
+    fn authorize_configuration(&self) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.well_known.authorize_configuration()
     }
 }
 
@@ -120,5 +138,36 @@ impl TokenTrait for Server {
     }
 }
 
+impl AuthorizeTrait for Server {
+    fn authorize(
+        &self,
+        realm: Option<String>,
+        client_id: String,
+        redirect_uri: String,
+        state: Option<String>,
+        response_type: Option<String>,
+        response_mode: Option<String>,
+        nonce: Option<String>,
+        account: Option<String>,
+        signature: Option<String>,
+        chain_id: Option<String>,
+        contract: Option<String>,
+    ) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.authorize.authorize(
+            realm,
+            client_id,
+            redirect_uri,
+            state,
+            response_type,
+            response_mode,
+            nonce,
+            account,
+            signature,
+            chain_id,
+            contract,
+        )
+    }
+}
+
 #[cfg(test)]
-mod tests;
+pub mod tests;
