@@ -92,6 +92,7 @@ pub struct AuthorizeParams {
     pub nonce: Option<String>,
     pub account: Option<String>,
     pub signature: Option<String>,
+    pub realm: Option<String>,
     pub chain_id: Option<String>,
     pub contract: Option<String>,
 }
