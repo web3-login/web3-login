@@ -12,6 +12,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::claims::Claims;
 use crate::config::Config;
+use crate::traits::TokenTrait;
 
 pub type Web3IdTokenFields = IdTokenFields<
     Claims,
@@ -24,6 +25,7 @@ pub type Web3IdTokenFields = IdTokenFields<
 
 pub type Web3TokenResponse = StandardTokenResponse<Web3IdTokenFields, CoreTokenType>;
 
+#[derive(Clone)]
 pub struct Tokens {
     pub muted: Arc<Mutex<HashMap<String, Web3TokenResponse>>>,
     pub bearer: Arc<Mutex<HashMap<String, String>>>,
@@ -77,4 +79,31 @@ pub async fn token(
         CoreTokenType::Bearer,
         Web3IdTokenFields::new(Some(id_token), EmptyExtraTokenFields {}),
     )
+}
+
+pub struct TokenImpl {
+    tokens: Tokens,
+}
+
+impl TokenImpl {
+    pub fn new(tokens: Tokens) -> Self {
+        Self { tokens }
+    }
+}
+
+impl TokenTrait for TokenImpl {
+    fn get_token(&self, code: String) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        let mutex = self.tokens.bearer.lock().unwrap();
+        let access_token = mutex.get(&code);
+        if access_token.is_none() {
+            return Err("Invalid Code".into());
+        }
+        let access_token = access_token.unwrap();
+        let mutex = self.tokens.muted.lock().unwrap();
+        let token = mutex.get(access_token);
+        match token {
+            Some(token) => Ok(serde_json::to_value(token.clone())?),
+            _ => Err("Invalid Code".into()),
+        }
+    }
 }

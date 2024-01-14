@@ -39,3 +39,19 @@ pub async fn get_authorize(app: State<Server>) -> Result<Json<serde_json::Value>
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }
+
+pub async fn get_token(
+    app: State<Server>,
+    code: String,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    match app.get_token(code) {
+        Ok(token) => Ok(Json(token)),
+        Err(err) => {
+            if err.to_string() == "Invalid Code" {
+                Err(StatusCode::BAD_REQUEST)
+            } else {
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        }
+    }
+}

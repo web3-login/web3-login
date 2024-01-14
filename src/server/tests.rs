@@ -71,3 +71,20 @@ async fn test_authorize() {
     let response = router.oneshot(req).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
+
+#[tokio::test]
+async fn test_token() {
+    let mut config = Config::default();
+    config.ext_hostname = "https://example.com".to_string();
+    let server = Server::new(config);
+    let router = router(server).unwrap();
+
+    let req = Request::builder()
+        .method("GET")
+        .uri("/token")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = router.oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}

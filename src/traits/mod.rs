@@ -22,3 +22,7 @@ pub trait WellKnownTrait: Send + Sync {
 
     fn authorize(&self) -> Result<Value, Box<dyn Error>>;
 }
+
+pub trait TokenTrait: Send + Sync {
+    fn get_token(&self, code: String) -> Result<Value, Box<dyn Error>>;
+}
