@@ -1,5 +1,5 @@
 use crate::{
-    authorize::AuthorizeImpl,
+    authorize::{AuthorizeImpl, AuthorizeOutcome},
     claims::ClaimsMutex,
     config::Config,
     jwk::JWKImpl,
@@ -9,7 +9,6 @@ use crate::{
     well_known::WellKnownImpl,
 };
 use axum::{
-    response::IntoResponse,
     routing::{get, options, post},
     Router,
 };
@@ -173,7 +172,7 @@ impl AuthorizeTrait for Server {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
-    ) -> Result<serde_json::Value, Box<dyn Error>> {
+    ) -> Result<AuthorizeOutcome, Box<dyn Error>> {
         self.authorize.authorize(
             realm,
             client_id,

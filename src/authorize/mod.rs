@@ -11,6 +11,7 @@ mod nft_authorize;
 pub use nft_authorize::*;
 
 mod web3_authorize;
+use serde::{Deserialize, Serialize};
 pub use web3_authorize::*;
 
 #[cfg_attr(not(feature = "wasm"), async_trait)]
@@ -54,4 +55,17 @@ pub trait Authorize {
         self.check_signature()?;
         Ok(())
     }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum AuthorizeOutcome {
+    RedirectNeeded(String),
+    Error(String),
+    Success(AuthData),
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct AuthData {
+    pub code: String,
+    pub id_token: Option<String>,
 }

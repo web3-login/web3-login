@@ -44,5 +44,6 @@ web3 = { version = "0.19", default-features = false, features = [
 
 [dev-dependencies]
 axum-test = "14.0.0"
+hyper = "1.1.0"
 tempfile = "3.8.1"
 tokio = { version = "1.0", features = ["full", "test-util"] }

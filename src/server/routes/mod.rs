@@ -1,6 +1,8 @@
+use crate::authorize::AuthorizeOutcome;
 use crate::{claims::Claims, traits::*};
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
+use axum::response::{IntoResponse, Redirect};
 use axum::Json;
 use axum_auth::AuthBearer;
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
@@ -100,7 +102,7 @@ pub struct AuthorizeParams {
 pub async fn get_authorize(
     app: State<Server>,
     params: Query<AuthorizeParams>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
+) -> impl IntoResponse {
     match app.authorize(
         None,
         params.client_id.clone(),
@@ -114,7 +116,17 @@ pub async fn get_authorize(
         params.chain_id.clone(),
         params.contract.clone(),
     ) {
-        Ok(authorize) => Ok(Json(authorize)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(authorize) => match authorize {
+            AuthorizeOutcome::RedirectNeeded(redirect) => {
+                Redirect::temporary(&redirect).into_response()
+            }
+            AuthorizeOutcome::Error(error) => {
+                Redirect::temporary(&format!("/400.html?message={}", error)).into_response()
+            }
+            AuthorizeOutcome::Success(auth_data) => {
+                Json(serde_json::to_value(auth_data).unwrap()).into_response()
+            }
+        },
+        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }

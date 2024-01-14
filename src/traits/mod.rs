@@ -3,7 +3,7 @@ use std::error::Error;
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
 use serde_json::Value;
 
-use crate::claims::Claims;
+use crate::{authorize::AuthorizeOutcome, claims::Claims};
 pub trait OIDCTrait: Send + Sync + UserInfoTrait + JWKTrait {}
 
 pub trait UserInfoTrait: Send + Sync {
@@ -41,5 +41,5 @@ pub trait AuthorizeTrait: Send + Sync {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
-    ) -> Result<Value, Box<dyn Error>>;
+    ) -> Result<AuthorizeOutcome, Box<dyn Error>>;
 }
