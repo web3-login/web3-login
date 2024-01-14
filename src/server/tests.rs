@@ -57,6 +57,23 @@ async fn test_jwk() {
 }
 
 #[tokio::test]
+async fn test_realm_jwk() {
+    let mut config = Config::default();
+    config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
+    let server = Server::new(config);
+    let router = router(server).unwrap();
+
+    let req = Request::builder()
+        .method("GET")
+        .uri("/default/jwk")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = router.oneshot(req).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
 async fn test_openid_configuration() {
     let mut config = Config::default();
     config.ext_hostname = "https://example.com".to_string();

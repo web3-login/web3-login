@@ -19,8 +19,7 @@ use std::{
 };
 
 use self::routes::{
-    get_authorize, get_authorize_configuration, 
-    get_jwk, get_openid_configuration, get_token,
+    get_authorize, get_authorize_configuration, get_jwk, get_openid_configuration, get_token,
     get_user_info, options_user_info, post_token,
 };
 
@@ -29,33 +28,47 @@ pub mod routes;
 pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
     let router = Router::new()
         .route("/userinfo", get(get_user_info))
+        .route("/:realm/userinfo", get(get_user_info))
         .route("/userinfo", options(options_user_info))
+        .route("/:realm/userinfo", options(options_user_info))
         .route("/jwk", get(get_jwk))
+        .route("/:realm/jwk", get(get_jwk))
         .route(
             "/.well-known/openid-configuration",
+            get(get_openid_configuration),
+        )
+        .route(
+            "/:realm/.well-known/openid-configuration",
             get(get_openid_configuration),
         )
         .route(
             "/.well-known/oauth-authorization-server/authorize",
             get(get_authorize_configuration),
         )
+        .route(
+            "/:realm/.well-known/oauth-authorization-server/authorize",
+            get(get_authorize_configuration),
+        )
         .route("/token", get(get_token))
+        .route("/:realm/token", get(get_token))
         .route("/token", post(post_token))
+        .route("/:realm/token", post(post_token))
         .route("/authorize", get(get_authorize))
+        .route("/:realm/authorize", get(get_authorize))
         .with_state(app);
     Ok(router)
 }
 
 #[derive(Clone)]
 pub struct Server {
-    config: Config,
-    claims: ClaimsMutex,
-    tokens: Tokens,
-    user_info: Arc<Box<dyn UserInfoTrait>>,
-    jwk: Arc<Box<dyn JWKTrait>>,
-    well_known: Arc<Box<dyn WellKnownTrait>>,
-    token: Arc<Box<dyn TokenTrait>>,
-    authorize: Arc<Box<dyn AuthorizeTrait>>,
+    pub config: Config,
+    pub claims: ClaimsMutex,
+    pub tokens: Tokens,
+    pub user_info: Arc<Box<dyn UserInfoTrait>>,
+    pub jwk: Arc<Box<dyn JWKTrait>>,
+    pub well_known: Arc<Box<dyn WellKnownTrait>>,
+    pub token: Arc<Box<dyn TokenTrait>>,
+    pub authorize: Arc<Box<dyn AuthorizeTrait>>,
 }
 
 impl OIDCTrait for Server {}
