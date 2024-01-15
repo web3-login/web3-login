@@ -3,12 +3,30 @@ use crate::{claims::Claims, traits::*};
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect};
+use axum::routing::{get, options, post};
 use axum::Json;
 use axum_auth::AuthBearer;
+use axum_extra::extract::OptionalPath;
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
 use serde::{Deserialize, Serialize};
 
 use super::Server;
+
+pub async fn get_providers(app: State<Server>) -> Json<serde_json::Value> {
+    let config = &app.config;
+    Json(serde_json::json!({
+        "providers": config.node_provider
+    }))
+}
+
+pub async fn get_realms(app: State<Server>) -> Json<Vec<String>> {
+    let config = &app.config;
+    Json(config.chain_id.keys().cloned().collect())
+}
+
+pub async fn get_frontend(app: State<Server>) -> Redirect {
+    Redirect::temporary(&app.config.frontend_host)
+}
 
 pub async fn get_user_info(
     AuthBearer(token): AuthBearer,
@@ -22,7 +40,10 @@ pub async fn get_user_info(
 
 pub async fn options_user_info() {}
 
-pub async fn get_jwk(app: State<Server>) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn get_jwk(
+    app: State<Server>,
+    OptionalPath(realm): OptionalPath<String>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     match app.jwk() {
         Ok(jwk) => Ok(Json(jwk)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -129,4 +150,22 @@ pub async fn get_authorize(
         },
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
+}
+
+pub fn oidc_routes() -> axum::Router<Server> {
+    axum::Router::new()
+        .route("/userinfo", get(get_user_info))
+        .route("/userinfo", options(options_user_info))
+        .route("/jwk", get(get_jwk))
+        .route(
+            "/.well-known/openid-configuration",
+            get(get_openid_configuration),
+        )
+        .route(
+            "/.well-known/oauth-authorization-server/authorize",
+            get(get_authorize_configuration),
+        )
+        .route("/token", get(get_token))
+        .route("/token", post(post_token))
+        .route("/authorize", get(get_authorize))
 }

@@ -8,10 +8,7 @@ use crate::{
     userinfo::UserInfoImpl,
     well_known::WellKnownImpl,
 };
-use axum::{
-    routing::{get, options, post},
-    Router,
-};
+use axum::{routing::get, Router};
 use std::{
     collections::HashMap,
     error::Error,
@@ -19,43 +16,17 @@ use std::{
 };
 use tower_http::services::{ServeDir, ServeFile};
 
-use self::routes::{
-    get_authorize, get_authorize_configuration, get_jwk, get_openid_configuration, get_token,
-    get_user_info, options_user_info, post_token,
-};
+use self::routes::{get_frontend, get_providers, get_realms, oidc_routes};
 
 pub mod routes;
 
 pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
     let router = Router::new()
-        .route("/userinfo", get(get_user_info))
-        .route("/:realm/userinfo", get(get_user_info))
-        .route("/userinfo", options(options_user_info))
-        .route("/:realm/userinfo", options(options_user_info))
-        .route("/jwk", get(get_jwk))
-        .route("/:realm/jwk", get(get_jwk))
-        .route(
-            "/.well-known/openid-configuration",
-            get(get_openid_configuration),
-        )
-        .route(
-            "/:realm/.well-known/openid-configuration",
-            get(get_openid_configuration),
-        )
-        .route(
-            "/.well-known/oauth-authorization-server/authorize",
-            get(get_authorize_configuration),
-        )
-        .route(
-            "/:realm/.well-known/oauth-authorization-server/authorize",
-            get(get_authorize_configuration),
-        )
-        .route("/token", get(get_token))
-        .route("/:realm/token", get(get_token))
-        .route("/token", post(post_token))
-        .route("/:realm/token", post(post_token))
-        .route("/authorize", get(get_authorize))
-        .route("/:realm/authorize", get(get_authorize))
+        .route("/frontend", get(get_frontend))
+        .route("/providers", get(get_providers))
+        .route("/realms", get(get_realms))
+        .nest("/", oidc_routes())
+        .nest("/:realm/", oidc_routes())
         .nest_service("/index.html", ServeFile::new("static/index.html"))
         .nest_service("/favicon.ico", ServeFile::new("static/favicon.ico"))
         .nest_service("/index.css", ServeDir::new("static/index.css"))
