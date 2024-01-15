@@ -21,7 +21,9 @@ wasm = ["web3/wasm"]
 [dependencies]
 async-trait = "0.1.72"
 axum = "0.7"
-axum-auth = { version = "0.7", default-features = false, features = ["auth-bearer"] }
+axum-auth = { version = "0.7", default-features = false, features = [
+    "auth-bearer",
+] }
 chrono = "0.4"
 futures = "0.3"
 hex = "0.4"
@@ -31,6 +33,7 @@ rocket-include-static-resources = { version = "0.10", features = [
     "cache",
 ], optional = true }
 serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
 serde_json = "1.0"
 tokio = { version = "1.35", features = ["full"], optional = true }
 tower = "0.4.13"

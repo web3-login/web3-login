@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Debug, Default, PartialEq, Deserialize, Clone)]
 pub struct Config {
@@ -45,5 +45,23 @@ pub fn get_node(config: &Config, realm: &str) -> String {
             .get(&"default".to_string())
             .unwrap()
             .clone(),
+    }
+}
+
+pub fn load_yml_config(path: PathBuf) -> Config {
+    let config = std::fs::read_to_string(path).unwrap();
+    serde_yaml::from_str(&config).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_load_config_yml() {
+        let config = load_yml_config(PathBuf::from("config.yml"));
+        assert!(config.node_provider.len() > 2);
+        assert!(config.chain_id.len() > 2);
     }
 }
