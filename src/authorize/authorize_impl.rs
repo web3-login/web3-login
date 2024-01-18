@@ -10,7 +10,7 @@ use openidconnect::{AccessToken, AuthorizationCode};
 use url::Url;
 use uuid::Uuid;
 
-use super::{Authorize, AuthorizeError, AuthorizeOutcome, NFTAuthorize, Web3Authorize};
+use super::{AuthScope, Authorize, AuthorizeError, AuthorizeOutcome, NFTAuthorize, Web3Authorize};
 
 pub struct AuthorizeImpl {
     pub config: crate::config::Config,
@@ -35,6 +35,7 @@ impl AuthorizeImpl {
 impl AuthorizeTrait for AuthorizeImpl {
     fn authorize(
         &self,
+        auth_scope: AuthScope,
         realm: Option<String>,
         client_id: String,
         redirect_uri: String,
@@ -47,6 +48,21 @@ impl AuthorizeTrait for AuthorizeImpl {
         chain_id: Option<String>,
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
+        if auth_scope == AuthScope::NFT {
+            return block_on(self.authorize_nft(
+                realm.unwrap_or_else(|| "default".into()),
+                client_id,
+                redirect_uri,
+                state,
+                response_type,
+                response_mode,
+                nonce,
+                account,
+                signature,
+                chain_id,
+                contract,
+            ));
+        }
         match contract {
             Some(contract) => block_on(self.authorize_nft(
                 realm.unwrap_or_else(|| "default".into()),
@@ -173,12 +189,12 @@ impl AuthorizeImpl {
 
         self.claims
             .standard_claims
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), standard_claims.clone());
         self.claims
             .additional_claims
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), additional_claims.clone());
 
@@ -197,12 +213,12 @@ impl AuthorizeImpl {
 
         self.tokens
             .bearer
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(code.secret().clone(), access_token.secret().clone());
         self.tokens
             .muted
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), token);
 
@@ -329,12 +345,13 @@ impl AuthorizeImpl {
 
         self.claims
             .standard_claims
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), standard_claims.clone());
+
         self.claims
             .additional_claims
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), additional_claims.clone());
 
@@ -353,12 +370,12 @@ impl AuthorizeImpl {
 
         self.tokens
             .bearer
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(code.secret().clone(), access_token.secret().clone());
         self.tokens
             .muted
-            .lock()
+            .try_lock()
             .unwrap()
             .insert(access_token.secret().clone(), token);
 

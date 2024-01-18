@@ -1,4 +1,4 @@
-use crate::authorize::AuthorizeOutcome;
+use crate::authorize::{AuthScope, AuthorizeOutcome};
 use crate::{claims::Claims, traits::*};
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -52,8 +52,9 @@ pub async fn get_jwk(
 
 pub async fn get_openid_configuration(
     app: State<Server>,
+    OptionalPath(auth_scope): OptionalPath<AuthScope>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    match app.openid_configuration() {
+    match app.openid_configuration(auth_scope.unwrap_or(AuthScope::Account)) {
         Ok(openid_configuration) => Ok(Json(openid_configuration)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -61,8 +62,9 @@ pub async fn get_openid_configuration(
 
 pub async fn get_authorize_configuration(
     app: State<Server>,
+    OptionalPath(auth_scope): OptionalPath<AuthScope>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    match app.authorize_configuration() {
+    match app.authorize_configuration(auth_scope.unwrap_or(AuthScope::Account)) {
         Ok(authorize) => Ok(Json(authorize)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
@@ -123,8 +125,10 @@ pub struct AuthorizeParams {
 pub async fn get_authorize(
     app: State<Server>,
     params: Query<AuthorizeParams>,
+    OptionalPath(auth_scope): OptionalPath<AuthScope>,
 ) -> impl IntoResponse {
     match app.authorize(
+        auth_scope.unwrap_or(AuthScope::Account),
         params.realm.clone(),
         params.client_id.clone(),
         params.redirect_uri.clone(),

@@ -1,5 +1,5 @@
 use crate::{
-    authorize::{AuthorizeImpl, AuthorizeOutcome},
+    authorize::{AuthScope, AuthorizeImpl, AuthorizeOutcome},
     claims::ClaimsMutex,
     config::Config,
     jwk::JWKImpl,
@@ -27,6 +27,8 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         .route("/realms", get(get_realms))
         .nest("/", oidc_routes())
         .nest("/:realm/", oidc_routes())
+        .nest("/account", oidc_routes())
+        .nest("/account/:realm/", oidc_routes())
         .nest_service("/index.html", ServeFile::new("static/index.html"))
         .nest_service("/favicon.ico", ServeFile::new("static/favicon.ico"))
         .nest_service("/index.css", ServeDir::new("static/index.css"))
@@ -114,12 +116,18 @@ impl UserInfoTrait for Server {
 }
 
 impl WellKnownTrait for Server {
-    fn openid_configuration(&self) -> Result<serde_json::Value, Box<dyn Error>> {
-        self.well_known.openid_configuration()
+    fn openid_configuration(
+        &self,
+        auth_scope: AuthScope,
+    ) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.well_known.openid_configuration(auth_scope)
     }
 
-    fn authorize_configuration(&self) -> Result<serde_json::Value, Box<dyn Error>> {
-        self.well_known.authorize_configuration()
+    fn authorize_configuration(
+        &self,
+        auth_scope: AuthScope,
+    ) -> Result<serde_json::Value, Box<dyn Error>> {
+        self.well_known.authorize_configuration(auth_scope)
     }
 }
 
@@ -132,6 +140,7 @@ impl TokenTrait for Server {
 impl AuthorizeTrait for Server {
     fn authorize(
         &self,
+        auth_scope: AuthScope,
         realm: Option<String>,
         client_id: String,
         redirect_uri: String,
@@ -145,6 +154,7 @@ impl AuthorizeTrait for Server {
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn Error>> {
         self.authorize.authorize(
+            auth_scope,
             realm,
             client_id,
             redirect_uri,

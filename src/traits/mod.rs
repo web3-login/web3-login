@@ -3,7 +3,10 @@ use std::error::Error;
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
 use serde_json::Value;
 
-use crate::{authorize::AuthorizeOutcome, claims::Claims};
+use crate::{
+    authorize::{AuthScope, AuthorizeOutcome},
+    claims::Claims,
+};
 pub trait OIDCTrait: Send + Sync + UserInfoTrait + JWKTrait {}
 
 pub trait UserInfoTrait: Send + Sync {
@@ -18,9 +21,9 @@ pub trait JWKTrait: Send + Sync {
 }
 
 pub trait WellKnownTrait: Send + Sync {
-    fn openid_configuration(&self) -> Result<Value, Box<dyn Error>>;
+    fn openid_configuration(&self, auth_scope: AuthScope) -> Result<Value, Box<dyn Error>>;
 
-    fn authorize_configuration(&self) -> Result<Value, Box<dyn Error>>;
+    fn authorize_configuration(&self, auth_scope: AuthScope) -> Result<Value, Box<dyn Error>>;
 }
 
 pub trait TokenTrait: Send + Sync {
@@ -30,6 +33,7 @@ pub trait TokenTrait: Send + Sync {
 pub trait AuthorizeTrait: Send + Sync {
     fn authorize(
         &self,
+        auth_scope: AuthScope,
         realm: Option<String>,
         client_id: String,
         redirect_uri: String,

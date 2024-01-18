@@ -7,7 +7,7 @@ use openidconnect::{
     TokenUrl, UserInfoUrl,
 };
 
-use crate::{config::Config, traits::WellKnownTrait};
+use crate::{authorize::AuthScope, config::Config, traits::WellKnownTrait};
 
 pub struct WellKnownImpl {
     config: Config,
@@ -20,11 +20,23 @@ impl WellKnownImpl {
 }
 
 impl WellKnownTrait for WellKnownImpl {
-    fn openid_configuration(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    fn openid_configuration(
+        &self,
+        auth_scope: AuthScope,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let provider_metadata = CoreProviderMetadata::new(
-            IssuerUrl::new(self.config.ext_hostname.to_string())?,
-            AuthUrl::new(format!("{}/authorize", self.config.ext_hostname)).unwrap(),
-            JsonWebKeySetUrl::new(format!("{}/jwk", self.config.ext_hostname)).unwrap(),
+            IssuerUrl::new(match auth_scope {
+                AuthScope::Account => format!("{}/account", self.config.ext_hostname),
+                AuthScope::NFT => format!("{}/nft", self.config.ext_hostname),
+            })?,
+            AuthUrl::new(match auth_scope {
+                AuthScope::Account => format!("{}/account/authorize", self.config.ext_hostname),
+                AuthScope::NFT => format!("{}/nft/authorize", self.config.ext_hostname),
+            })?,
+            JsonWebKeySetUrl::new(match auth_scope {
+                AuthScope::Account => format!("{}/account/jwk", self.config.ext_hostname),
+                AuthScope::NFT => format!("{}/nft/jwk", self.config.ext_hostname),
+            })?,
             vec![
                 ResponseTypes::new(vec![CoreResponseType::Code]),
                 ResponseTypes::new(vec![CoreResponseType::Token, CoreResponseType::IdToken]),
@@ -33,14 +45,14 @@ impl WellKnownTrait for WellKnownImpl {
             vec![CoreJwsSigningAlgorithm::RsaSsaPssSha256],
             EmptyAdditionalProviderMetadata {},
         )
-        .set_token_endpoint(Some(TokenUrl::new(format!(
-            "{}/token",
-            self.config.ext_hostname
-        ))?))
-        .set_userinfo_endpoint(Some(UserInfoUrl::new(format!(
-            "{}/userinfo",
-            self.config.ext_hostname
-        ))?))
+        .set_token_endpoint(Some(TokenUrl::new(match auth_scope {
+            AuthScope::Account => format!("{}/account/token", self.config.ext_hostname),
+            AuthScope::NFT => format!("{}/nft/token", self.config.ext_hostname),
+        })?))
+        .set_userinfo_endpoint(Some(UserInfoUrl::new(match auth_scope {
+            AuthScope::Account => format!("{}/account/userinfo", self.config.ext_hostname),
+            AuthScope::NFT => format!("{}/nft/userinfo", self.config.ext_hostname),
+        })?))
         .set_scopes_supported(Some(vec![
             Scope::new("openid".to_string()),
             Scope::new("nft".to_string()),
@@ -56,7 +68,10 @@ impl WellKnownTrait for WellKnownImpl {
         Ok(serde_json::to_value(provider_metadata)?)
     }
 
-    fn authorize_configuration(&self) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-        self.openid_configuration()
+    fn authorize_configuration(
+        &self,
+        auth_scope: AuthScope,
+    ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+        self.openid_configuration(auth_scope)
     }
 }

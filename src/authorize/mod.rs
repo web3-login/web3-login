@@ -57,6 +57,14 @@ pub trait Authorize {
     }
 }
 
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum AuthScope {
+    #[serde(rename = "nft")]
+    NFT,
+    #[serde(rename = "account")]
+    Account,
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub enum AuthorizeOutcome {
     RedirectNeeded(String),
