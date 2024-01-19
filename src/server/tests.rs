@@ -450,12 +450,15 @@ mod authorize_tests {
             assert_eq!(params.get("contract"), Some(&client_id.to_string()));
         }
 
-        #[ignore = "death lock"]
         #[tokio::test]
         async fn test_wrong_redirect_uri() {
             let client_id = "foo";
             let contract = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4";
+
+            // Somehow this is not working, but it works in web3.rs tests
             let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+            let account = "0x9c9E8eAbD947658bDb713E0d3eBfe56860abdb8D".to_string();
+
             let nonce = "dotzxrenodo".to_string();
             let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();
 
@@ -480,10 +483,43 @@ mod authorize_tests {
                 response.headers().get("Location").unwrap(),
                 "/400.html?message=wrong%20redirect%20uri"
             );
+        }
+
+        #[tokio::test]
+        async fn test_st_ate() {
+            let client_id = "foo";
+            let contract = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4";
+
+            // Somehow this is not working, but it works in web3.rs tests
+            let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+            let account = "0x9c9E8eAbD947658bDb713E0d3eBfe56860abdb8D".to_string();
+
+            let nonce = "dotzxrenodo".to_string();
+            let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();
+            let state = "state".to_string();
+
+            let config = test_config();
+            let server = Server::new(config);
+            let app = router(server).unwrap();
+
+            let uri = format!(
+                "/nft/authorize?client_id={}&realm=okt&redirect_uri=https://example.com&nonce={}&contract={}&account={}&signature={}&state={}",
+                client_id, nonce, contract, account, signature, state
+            );
+
+            let request = Request::builder()
+                .method(http::Method::GET)
+                .uri(uri)
+                .body(Body::empty())
+                .unwrap();
+
+            let response = app.oneshot(request).await.unwrap();
+            assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
 
             let location_header = response.headers().get(http::header::LOCATION).unwrap();
             let location = location_header.to_str().unwrap();
             let response_url = Url::parse(location).unwrap();
+            println!("{:?}", response_url);
 
             let params: HashMap<String, String> = response_url
                 .query()
@@ -494,7 +530,7 @@ mod authorize_tests {
                 })
                 .unwrap_or_else(HashMap::new);
 
-            assert_eq!(params.get("realm"), Some(&"okt".to_string()));
+            assert_eq!(params.get("state"), Some(&state));
         }
     }
 }

@@ -109,6 +109,12 @@ impl AuthorizeImpl {
         chain_id: Option<String>,
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
+        if Url::parse(&redirect_uri).is_err() {
+            return Ok(AuthorizeOutcome::Error(
+                "wrong%20redirect%20uri".to_string(),
+            ));
+        }
+
         if account.is_none() {
             let mut url = Url::parse(&format!("{}/", self.config.frontend_host)).unwrap();
             url.query_pairs_mut()
@@ -260,6 +266,12 @@ impl AuthorizeImpl {
         chain_id: Option<String>,
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
+        if Url::parse(&redirect_uri).is_err() {
+            return Ok(AuthorizeOutcome::Error(
+                "wrong%20redirect%20uri".to_string(),
+            ));
+        }
+
         if account.is_none() {
             let mut url = Url::parse(&format!("{}/", self.config.frontend_host)).unwrap();
             url.query_pairs_mut()

@@ -43,6 +43,7 @@ pub trait Authorize {
         let account = self.get_account().as_ref().unwrap().to_string();
         let nonce = self.get_nonce().as_ref().unwrap().to_string();
         let signature = self.get_signature().as_ref().unwrap().to_string();
+
         match validate_signature(account, nonce, signature) {
             true => Ok(()),
             false => Err(AuthorizeError::SignatureError),

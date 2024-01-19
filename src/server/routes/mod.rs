@@ -145,9 +145,11 @@ pub async fn get_authorize(
             AuthorizeOutcome::RedirectNeeded(redirect) => {
                 Redirect::temporary(&redirect).into_response()
             }
-            AuthorizeOutcome::Error(error) => {
-                Redirect::temporary(&format!("/400.html?message={}", error)).into_response()
-            }
+            AuthorizeOutcome::Error(error) => Redirect::temporary(&format!(
+                "{}/400.html?message={}",
+                app.config.ext_hostname, error
+            ))
+            .into_response(),
             AuthorizeOutcome::Success(auth_data) => {
                 Json(serde_json::to_value(auth_data).unwrap()).into_response()
             }
