@@ -71,6 +71,7 @@ pub enum AuthorizeOutcome {
     RedirectNeeded(String),
     Error(String),
     Success(AuthData),
+    Denied(String),
 }
 
 #[derive(Clone, Serialize, Deserialize)]

@@ -185,17 +185,24 @@ mod tests {
 
     #[tokio::test]
     async fn test_crypto_boy_on_okt() {
-        let rocket = rocket::build();
-        let figment = rocket.figment();
-        let config: crate::config::Config = figment.extract().expect("config");
+        let node_provider = "https://exchaintestrpc.okex.org".to_string();
 
         let nft_addr = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4".to_string();
         let owner = "0x9c9E8eAbD947658bDb713E0d3eBfe56860abdb8D".to_string();
-        assert!(
-            is_nft_owner_of(nft_addr, owner, config.node_provider["okt"].clone())
-                .await
-                .unwrap()
-        );
+        assert!(is_nft_owner_of(nft_addr, owner, node_provider)
+            .await
+            .unwrap());
+    }
+
+    #[tokio::test]
+    async fn test_crypto_boy_on_okt_lower_case() {
+        let node_provider = "https://exchaintestrpc.okex.org".to_string();
+
+        let nft_addr = "0x886B6781CD7dF75d8440Aba84216b2671AEFf9A4".to_string();
+        let owner = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
+        assert!(is_nft_owner_of(nft_addr, owner, node_provider)
+            .await
+            .unwrap());
     }
 
     #[test]

@@ -160,7 +160,7 @@ impl AuthorizeImpl {
                     return Ok(AuthorizeOutcome::Error("signature%20missing".to_string()))
                 }
                 AuthorizeError::NFTError => {
-                    return Ok(AuthorizeOutcome::Error("access%20denied".to_string()))
+                    return Ok(AuthorizeOutcome::Denied("access%20denied".to_string()))
                 }
             },
         };
@@ -322,7 +322,7 @@ impl AuthorizeImpl {
                     return Ok(AuthorizeOutcome::Error("signature%20missing".to_string()))
                 }
                 AuthorizeError::NFTError => {
-                    return Ok(AuthorizeOutcome::Error("access%20denied".to_string()))
+                    return Ok(AuthorizeOutcome::Denied("access%20denied".to_string()))
                 }
             },
         };
