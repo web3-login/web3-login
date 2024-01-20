@@ -7,6 +7,7 @@ extern crate rocket_include_static_resources;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+use clap::Parser;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::{Header, Status};
 use rocket::response::Redirect;
@@ -20,8 +21,9 @@ mod tests;
 
 use endpoints::account_endpoints;
 use endpoints::nft_endpoints;
-
 use web3_login::claims::ClaimsMutex;
+use web3_login::cli::Args;
+use web3_login::config::load_yml_config as load_config;
 use web3_login::config::{realms, Config};
 use web3_login::token::Tokens;
 
@@ -101,6 +103,12 @@ pub async fn get_frontend(config: &State<Config>) -> Result<Redirect, (Status, S
 
 #[launch]
 pub fn rocket() -> _ {
+    pretty_env_logger::try_init().ok();
+
+    let args = Args::parse();
+
+    let mut config = load_config(args.config);
+
     let rocket = rocket::build();
     let figment = rocket.figment();
     let mut config: Config = figment.extract().expect("config");

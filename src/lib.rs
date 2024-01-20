@@ -1,5 +1,6 @@
 pub mod authorize;
 pub mod claims;
+pub mod cli;
 pub mod config;
 pub mod jwk;
 pub mod token;
