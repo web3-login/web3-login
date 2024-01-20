@@ -1,3 +1,5 @@
+#![cfg(feature = "account")]
+
 use futures::executor::block_on;
 use std::str::FromStr;
 use web3::signing::{keccak256, recover};

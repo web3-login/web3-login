@@ -25,10 +25,6 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         .route("/frontend", get(get_frontend))
         .route("/providers", get(get_providers))
         .route("/realms", get(get_realms))
-        .nest("/", oidc_routes())
-        .nest("/:realm/", oidc_routes())
-        .nest("/account", oidc_routes())
-        .nest("/account/:realm/", oidc_routes())
         .nest_service("/index.html", ServeFile::new("static/index.html"))
         .nest_service("/favicon.ico", ServeFile::new("static/favicon.ico"))
         .nest_service("/index.css", ServeDir::new("static/index.css"))
@@ -36,6 +32,13 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         .nest_service("/400.html", ServeFile::new("static/400.html"))
         .nest_service("/401.html", ServeFile::new("static/401.html"))
         .route_service("/", ServeFile::new("static/index.html"));
+
+    #[cfg(feature = "account")]
+    let router = router
+        .nest("/", oidc_routes())
+        .nest("/:realm/", oidc_routes())
+        .nest("/account", oidc_routes())
+        .nest("/account/:realm/", oidc_routes());
 
     #[cfg(feature = "nft")]
     let router = router

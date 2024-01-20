@@ -1,5 +1,5 @@
-use crate::web3::validate_signature;
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 
 mod authorize_impl;
 pub use authorize_impl::*;
@@ -8,10 +8,7 @@ mod authorize_error;
 pub use authorize_error::*;
 
 mod nft_authorize;
-
 mod web3_authorize;
-use serde::{Deserialize, Serialize};
-pub use web3_authorize::*;
 
 #[cfg_attr(not(feature = "wasm"), async_trait)]
 #[cfg_attr(feature="wasm", async_trait(?Send))]
@@ -34,20 +31,7 @@ pub trait Authorize {
         }
     }
 
-    fn check_signature(&self) -> Result<(), AuthorizeError> {
-        match self.get_signature() {
-            Some(_) => (),
-            None => return Err(AuthorizeError::SignatureError),
-        };
-        let account = self.get_account().as_ref().unwrap().to_string();
-        let nonce = self.get_nonce().as_ref().unwrap().to_string();
-        let signature = self.get_signature().as_ref().unwrap().to_string();
-
-        match validate_signature(account, nonce, signature) {
-            true => Ok(()),
-            false => Err(AuthorizeError::SignatureError),
-        }
-    }
+    fn check_signature(&self) -> Result<(), AuthorizeError>;
 
     async fn authorize(&self) -> Result<(), AuthorizeError> {
         self.check_account()?;

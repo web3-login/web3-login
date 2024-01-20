@@ -1,4 +1,8 @@
-use super::Authorize;
+#![cfg(feature = "account")]
+
+use crate::web3::validate_signature;
+
+use super::{Authorize, AuthorizeError};
 use async_trait::async_trait;
 
 pub struct Web3Authorize {
@@ -18,6 +22,21 @@ impl Authorize for Web3Authorize {
     }
     fn get_signature(&self) -> &Option<String> {
         &self.signature
+    }
+
+    fn check_signature(&self) -> Result<(), AuthorizeError> {
+        match self.get_signature() {
+            Some(_) => (),
+            None => return Err(AuthorizeError::SignatureError),
+        };
+        let account = self.get_account().as_ref().unwrap().to_string();
+        let nonce = self.get_nonce().as_ref().unwrap().to_string();
+        let signature = self.get_signature().as_ref().unwrap().to_string();
+
+        match validate_signature(account, nonce, signature) {
+            true => Ok(()),
+            false => Err(AuthorizeError::SignatureError),
+        }
     }
 }
 

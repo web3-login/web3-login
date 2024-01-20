@@ -20,7 +20,7 @@ path = "src/bin/main.rs"
 default = ["account"]
 cli = ["bin", "clap"]
 account = ["web3"]
-nft = ["account"]
+nft = ["account", "web3"]
 bin = ["tokio"]
 wasm = ["web3/wasm"]
 

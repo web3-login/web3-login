@@ -10,7 +10,10 @@ use openidconnect::{AccessToken, AuthorizationCode};
 use url::Url;
 use uuid::Uuid;
 
-use super::{AuthScope, Authorize, AuthorizeError, AuthorizeOutcome, Web3Authorize};
+use super::{AuthScope, Authorize, AuthorizeError, AuthorizeOutcome};
+
+#[cfg(feature = "account")]
+use super::web3_authorize::Web3Authorize;
 
 #[cfg(feature = "nft")]
 use super::nft_authorize::NFTAuthorize;
@@ -84,19 +87,26 @@ impl AuthorizeTrait for AuthorizeImpl {
                 Some(contract),
             )),
 
-            _ => block_on(self.authorize_account(
-                realm.unwrap_or_else(|| "default".into()),
-                client_id,
-                redirect_uri,
-                state,
-                response_type,
-                response_mode,
-                nonce,
-                account,
-                signature,
-                chain_id,
-                contract,
-            )),
+            _ => {
+                #[cfg(feature = "account")]
+                {
+                    block_on(self.authorize_account(
+                        realm.unwrap_or_else(|| "default".into()),
+                        client_id,
+                        redirect_uri,
+                        state,
+                        response_type,
+                        response_mode,
+                        nonce,
+                        account,
+                        signature,
+                        chain_id,
+                        contract,
+                    ))
+                }
+                #[cfg(not(feature = "account"))]
+                Ok(AuthorizeOutcome::Denied("access%20denied".to_string()))
+            }
         }
     }
 }
