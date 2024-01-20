@@ -15,3 +15,9 @@ pub mod signature_validator;
 pub mod server;
 pub mod traits;
 pub mod well_known;
+
+pub mod prelude {
+    pub use crate::server::routes::oidc_routes;
+    pub use crate::server::Server;
+    pub use crate::traits::*;
+}
