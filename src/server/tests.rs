@@ -943,7 +943,7 @@ mod config_tests {
         #[cfg(feature = "nft")]
         #[tokio::test]
         async fn test_nft_jwk() {
-            let config =  test_config();
+            let config = test_config();
             let server = Server::new(config);
             let router = router(server).unwrap();
 

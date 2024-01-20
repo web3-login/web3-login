@@ -1,18 +1,19 @@
-FROM rust:1.59.0-slim-buster AS builder
+FROM rust:1.73.0-slim-buster AS builder
 WORKDIR /usr/src/
 
 RUN USER=root cargo new web3-login
 WORKDIR /usr/src/web3-login
+RUN touch src/lib.rs
 COPY Cargo.toml Cargo.lock ./
-RUN cargo build --release
+RUN cargo fetch
 RUN rm src/*.rs
 COPY src ./src
 COPY static ./static
-COPY do-not-use.pem ./do-not-use.pem
-RUN touch src/main.rs
+RUN touch src/bin/main.rs
+RUN touch src/lib.rs
 RUN cargo build --release
 
-FROM rust:1.59.0-slim-buster
+FROM rust:1.73.0-slim-buster
 
 COPY --from=builder /usr/src/web3-login/target/release/web3-login /bin
 USER 1000
