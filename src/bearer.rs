@@ -15,7 +15,7 @@ impl<'r> FromRequest<'r> for Bearer {
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match req.headers().get_one("Authorization") {
-            None => Outcome::Failure((Status::BadRequest, BearerError::Missing)),
+            None => Outcome::Error((Status::BadRequest, BearerError::Missing)),
             Some(token) => Outcome::Success(Bearer(token.to_string().replace("Bearer ", ""))),
         }
     }
