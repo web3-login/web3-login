@@ -18,6 +18,7 @@ path = "src/bin/main.rs"
 
 [features]
 default = ["account", "bin"]
+cli = ["clap"]
 account = ["web3"]
 nft = ["account"]
 bin = ["tokio"]
@@ -31,7 +32,7 @@ axum-auth = { version = "0.7", default-features = false, features = [
 ] }
 axum-extra = "0.9.2"
 chrono = "0.4"
-clap = { version = "4.4", features = ["derive"] }
+clap = { version = "4.4", features = ["derive"], optional = true }
 futures = "0.3"
 hex = "0.4"
 log = "0.4"

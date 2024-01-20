@@ -1,6 +1,8 @@
 use std::net::{Ipv4Addr, SocketAddrV4};
 
+#[cfg(feature = "cli")]
 use clap::Parser;
+#[cfg(feature = "cli")]
 use web3_login::cli::Args;
 use web3_login::config::load_yml_config as load_config;
 use web3_login::server::{router, Server};
@@ -9,15 +11,21 @@ use web3_login::server::{router, Server};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     pretty_env_logger::try_init().ok();
 
-    let args = Args::parse();
-
-    let config = load_config(args.config);
+    let (config, port) = {
+        #[cfg(feature = "cli")]
+        {
+            let args = Args::parse();
+            (load_config(args.config), args.port.unwrap_or(8080))
+        }
+        #[cfg(not(feature = "cli"))]
+        {
+            (load_config("config.yml".into()), 8080)
+        }
+    };
 
     let server = Server::new(config);
 
     let app = router(server)?;
-
-    let port = args.port.unwrap_or(8080);
 
     let addr_v4 = SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, port);
 

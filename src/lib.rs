@@ -1,5 +1,7 @@
 pub mod authorize;
 pub mod claims;
+
+#[cfg(feature = "cli")]
 pub mod cli;
 pub mod config;
 pub mod jwk;
