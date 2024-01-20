@@ -777,3 +777,124 @@ mod authorize_tests {
         }
     }
 }
+
+mod config_tests {
+    use http_body_util::BodyExt;
+    use serde_json::Value;
+
+    use super::*;
+
+    #[test]
+    fn test_config() {
+        let config = Config::default();
+        assert_eq!(config.ext_hostname, "http://localhost:8000");
+        assert_eq!(config.frontend_host, "http://localhost:3000");
+        assert_eq!(config.rsa_pem, None);
+        assert_eq!(config.chain_id.len(), 1);
+        assert_eq!(config.node_provider.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_realms() {
+        let mut config = Config::default();
+        config.chain_id.insert("default".into(), 42);
+        config.node_provider.insert(
+            "default".into(),
+            "https://kovan.infura.io/v3/43".parse().unwrap(),
+        );
+        config.chain_id.insert("kovan".into(), 42);
+        config.node_provider.insert(
+            "kovan".into(),
+            "https://kovan.infura.io/v3/43".parse().unwrap(),
+        );
+        config.chain_id.insert("okt".into(), 65);
+        config.node_provider.insert(
+            "okt".into(),
+            "https://exchaintestrpc.okex.org".parse().unwrap(),
+        );
+
+        assert_eq!(config.chain_id.len(), 3);
+        assert_eq!(config.node_provider.len(), 3);
+
+        let server = Server::new(config);
+        let router = router(server).unwrap();
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/realms")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = router.oneshot(req).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(body["realms"].is_array(), true);
+        assert_eq!(body["realms"].as_array().unwrap().len(), 3);
+    }
+
+    #[tokio::test]
+    async fn test_providers() {
+        let mut config = Config::default();
+        config.chain_id.insert("default".into(), 42);
+        config.node_provider.insert(
+            "default".into(),
+            "https://kovan.infura.io/v3/43".parse().unwrap(),
+        );
+        config.chain_id.insert("kovan".into(), 42);
+        config.node_provider.insert(
+            "kovan".into(),
+            "https://kovan.infura.io/v3/43".parse().unwrap(),
+        );
+        config.chain_id.insert("okt".into(), 65);
+        config.node_provider.insert(
+            "okt".into(),
+            "https://exchaintestrpc.okex.org".parse().unwrap(),
+        );
+
+        assert_eq!(config.chain_id.len(), 3);
+        assert_eq!(config.node_provider.len(), 3);
+
+        let server = Server::new(config);
+        let router = router(server).unwrap();
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/providers")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = router.oneshot(req).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(body["providers"].is_object(), true);
+        assert_eq!(body["providers"].as_object().unwrap().keys().len(), 3);
+
+        let providers = body["providers"].as_object().unwrap();
+        assert_eq!(providers["default"], "https://kovan.infura.io/v3/43");
+    }
+
+    #[tokio::test]
+    async fn test_frontend() {
+        let config = Config::default();
+        let server = Server::new(config);
+        let router = router(server).unwrap();
+
+        let req = Request::builder()
+            .method("GET")
+            .uri("/frontend")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = router.oneshot(req).await.unwrap();
+        assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
+
+        let redirect = response.headers().get(hyper::header::LOCATION).unwrap();
+        assert_eq!(redirect, "http://localhost:3000");
+    }
+}
