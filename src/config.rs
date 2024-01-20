@@ -8,7 +8,7 @@ pub struct Config {
     pub key_id: String,
     pub node_provider: HashMap<String, String>,
     pub chain_id: HashMap<String, i32>,
-    pub rsa_pem: Option<String>,
+    pub eddsa_pem: Option<String>,
 }
 
 impl Default for Config {
@@ -26,7 +26,7 @@ impl Default for Config {
             key_id: "default".to_string(),
             node_provider,
             chain_id,
-            rsa_pem: None,
+            eddsa_pem: None,
         }
     }
 }

@@ -1,3 +1,5 @@
+#![cfg(feature = "nft")]
+
 use crate::web3::is_nft_owner_of;
 use async_trait::async_trait;
 

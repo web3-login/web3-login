@@ -1,14 +1,16 @@
-use std::net::{Ipv4Addr, SocketAddrV4};
-
-#[cfg(feature = "cli")]
-use clap::Parser;
-#[cfg(feature = "cli")]
-use web3_login::cli::Args;
-use web3_login::config::load_yml_config as load_config;
-use web3_login::server::{router, Server};
-
+#[cfg(feature = "bin")]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use std::net::{Ipv4Addr, SocketAddrV4};
+    use tokio::net::TcpListener;
+
+    #[cfg(feature = "cli")]
+    use clap::Parser;
+    #[cfg(feature = "cli")]
+    use web3_login::cli::Args;
+    use web3_login::config::load_yml_config as load_config;
+    use web3_login::server::{router, Server};
+
     pretty_env_logger::try_init().ok();
 
     let (config, port) = {
@@ -31,9 +33,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     log::info!("Listening on {}", addr_v4);
 
-    let listener = tokio::net::TcpListener::bind(addr_v4).await?;
+    let listener = TcpListener::bind(addr_v4).await?;
 
     axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
+}
+
+#[cfg(not(feature = "bin"))]
+fn main() {
+    println!("This binary is not available without the `bin` feature.");
+    println!("Please use `cargo run --features bin` instead.")
 }

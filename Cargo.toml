@@ -17,8 +17,8 @@ name = "web3-login"
 path = "src/bin/main.rs"
 
 [features]
-default = ["account", "bin"]
-cli = ["clap"]
+default = ["account"]
+cli = ["bin", "clap"]
 account = ["web3"]
 nft = ["account"]
 bin = ["tokio"]

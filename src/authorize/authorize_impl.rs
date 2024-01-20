@@ -10,7 +10,10 @@ use openidconnect::{AccessToken, AuthorizationCode};
 use url::Url;
 use uuid::Uuid;
 
-use super::{AuthScope, Authorize, AuthorizeError, AuthorizeOutcome, NFTAuthorize, Web3Authorize};
+use super::{AuthScope, Authorize, AuthorizeError, AuthorizeOutcome, Web3Authorize};
+
+#[cfg(feature = "nft")]
+use super::nft_authorize::NFTAuthorize;
 
 pub struct AuthorizeImpl {
     pub config: crate::config::Config,
@@ -35,7 +38,7 @@ impl AuthorizeImpl {
 impl AuthorizeTrait for AuthorizeImpl {
     fn authorize(
         &self,
-        auth_scope: AuthScope,
+        #[allow(unused_variables)] auth_scope: AuthScope,
         realm: Option<String>,
         client_id: String,
         redirect_uri: String,
@@ -48,6 +51,7 @@ impl AuthorizeTrait for AuthorizeImpl {
         chain_id: Option<String>,
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
+        #[cfg(feature = "nft")]
         if auth_scope == AuthScope::NFT {
             return block_on(self.authorize_nft(
                 realm.unwrap_or_else(|| "default".into()),
@@ -63,7 +67,9 @@ impl AuthorizeTrait for AuthorizeImpl {
                 contract,
             ));
         }
+
         match contract {
+            #[cfg(feature = "nft")]
             Some(contract) => block_on(self.authorize_nft(
                 realm.unwrap_or_else(|| "default".into()),
                 client_id,
@@ -77,7 +83,8 @@ impl AuthorizeTrait for AuthorizeImpl {
                 chain_id,
                 Some(contract),
             )),
-            None => block_on(self.authorize_account(
+
+            _ => block_on(self.authorize_account(
                 realm.unwrap_or_else(|| "default".into()),
                 client_id,
                 redirect_uri,
@@ -95,6 +102,7 @@ impl AuthorizeTrait for AuthorizeImpl {
 }
 
 impl AuthorizeImpl {
+    #[cfg(feature = "account")]
     async fn authorize_account(
         &self,
         realm: String,
@@ -252,6 +260,7 @@ impl AuthorizeImpl {
         Ok(AuthorizeOutcome::RedirectNeeded(redirect_uri.to_string()))
     }
 
+    #[cfg(feature = "nft")]
     async fn authorize_nft(
         &self,
         realm: String,

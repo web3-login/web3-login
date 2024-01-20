@@ -31,4 +31,4 @@ chain_id:
   main: 1
 ext_hostname: "https://oidc.web3-login.example.com"
 frontend_host: "https://web3-login.example.com"
-rsa_pem: "../do-not-use.pem"
+eddsa_pem: "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIOKlIljKAZAW2V8x4Vq+Xc9k6IVQplhg1nyeoaj245Zp\n-----END PRIVATE KEY-----"

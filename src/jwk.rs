@@ -1,4 +1,4 @@
-use openidconnect::core::{CoreJsonWebKeySet, CoreRsaPrivateSigningKey};
+use openidconnect::core::{CoreEdDsaPrivateSigningKey, CoreJsonWebKeySet};
 use openidconnect::{JsonWebKeyId, PrivateSigningKey};
 use serde_json::Value;
 use std::error::Error;
@@ -23,8 +23,8 @@ impl JWKTrait for JWKImpl {
 }
 
 pub fn jwk(config: &Config) -> Result<Value, Box<dyn Error>> {
-    let jwks = CoreJsonWebKeySet::new(vec![CoreRsaPrivateSigningKey::from_pem(
-        config.rsa_pem.as_ref().unwrap(),
+    let jwks = CoreJsonWebKeySet::new(vec![CoreEdDsaPrivateSigningKey::from_ed25519_pem(
+        config.eddsa_pem.as_ref().unwrap(),
         Some(JsonWebKeyId::new(config.key_id.to_string())),
     )?
     .as_verification_key()]);
@@ -39,11 +39,16 @@ mod tests {
     #[test]
     fn test_jwk() {
         let mut config: Config = Config::default();
-        config.rsa_pem = Some(include_str!("../do-not-use.pem").to_string());
+        config.eddsa_pem = Some(
+            r#"-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINsjesLaPcnsC79ywSYvigidJ2TQ+aOBPsOh3KJg5Yk+
+-----END PRIVATE KEY-----"#
+                .to_string(),
+        );
         let jwks = jwk(&config);
         assert!(jwks.is_ok());
 
-        config.rsa_pem = Some("error pem".to_string());
+        config.eddsa_pem = Some("error pem".to_string());
         let jwks = jwk(&config);
         assert!(jwks.is_err());
     }

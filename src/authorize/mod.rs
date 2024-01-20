@@ -8,7 +8,6 @@ mod authorize_error;
 pub use authorize_error::*;
 
 mod nft_authorize;
-pub use nft_authorize::*;
 
 mod web3_authorize;
 use serde::{Deserialize, Serialize};
@@ -58,8 +57,9 @@ pub trait Authorize {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AuthScope {
+    #[cfg(feature = "nft")]
     #[serde(rename = "nft")]
     NFT,
     #[serde(rename = "account")]

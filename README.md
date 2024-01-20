@@ -30,6 +30,16 @@ cargo test    # Run tests
 cargo run     # Start the web3-login service
 ```
 
+## Configuration
+
+### Generate Keys
+
+```sh
+openssl genpkey -algorithm ed25519
+```
+
+Copy the generated private key to config.yml.
+
 ## Using Cloudflare Argo Tunnel with Docker
 
 Cloudflare Argo Tunnel provides a secure way to connect your infrastructure to the Cloudflare network without exposing public IPs. By integrating it with the `web3-login` service, you can achieve improved performance and security for user authentication. It's especially beneficial for projects where identity and privacy matter.

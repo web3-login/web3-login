@@ -7,9 +7,14 @@ use axum::{
 };
 use tower::ServiceExt;
 
-fn test_config() -> Config {
+pub fn test_config() -> Config {
     let mut config = Config::default();
-    config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
+    config.eddsa_pem = Some(
+        r#"-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINsjesLaPcnsC79ywSYvigidJ2TQ+aOBPsOh3KJg5Yk+
+-----END PRIVATE KEY-----"#
+            .to_string(),
+    );
     config.ext_hostname = "http://localhost:8000".to_string();
     config.frontend_host = "http://localhost:8081".to_string();
     config.chain_id.insert("default".into(), 42);
@@ -64,8 +69,7 @@ async fn test_options_user_info() {
 
 #[tokio::test]
 async fn test_jwk() {
-    let mut config = Config::default();
-    config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
+    let config = test_config();
     let server = Server::new(config);
     let router = router(server).unwrap();
 
@@ -81,8 +85,7 @@ async fn test_jwk() {
 
 #[tokio::test]
 async fn test_realm_jwk() {
-    let mut config = Config::default();
-    config.rsa_pem = Some(include_str!("../../do-not-use.pem").to_string());
+    let config = test_config();
     let server = Server::new(config);
     let router = router(server).unwrap();
 
@@ -411,6 +414,7 @@ mod authorize_tests {
         }
     }
 
+    #[cfg(feature = "nft")]
     mod nft_scope {
         use super::*;
 
@@ -785,11 +789,11 @@ mod config_tests {
     use super::*;
 
     #[test]
-    fn test_config() {
+    fn test_default_config() {
         let config = Config::default();
         assert_eq!(config.ext_hostname, "http://localhost:8000");
         assert_eq!(config.frontend_host, "http://localhost:3000");
-        assert_eq!(config.rsa_pem, None);
+        assert_eq!(config.eddsa_pem, None);
         assert_eq!(config.chain_id.len(), 1);
         assert_eq!(config.node_provider.len(), 1);
     }
@@ -896,5 +900,78 @@ mod config_tests {
 
         let redirect = response.headers().get(hyper::header::LOCATION).unwrap();
         assert_eq!(redirect, "http://localhost:3000");
+    }
+
+    mod test_features {
+        use super::*;
+
+        #[cfg(feature = "account")]
+        #[tokio::test]
+        async fn test_account_jwk() {
+            let config: Config = test_config();
+
+            let server = Server::new(config);
+            let router = router(server).unwrap();
+
+            let req = Request::builder()
+                .method("GET")
+                .uri("/account/jwk")
+                .body(Body::empty())
+                .unwrap();
+
+            let response = router.oneshot(req).await.unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+        }
+
+        #[cfg(not(feature = "account"))]
+        #[tokio::test]
+        async fn test_not_account_jwk() {
+            let config = test_config();
+            let server = Server::new(config);
+            let router = router(server).unwrap();
+
+            let req = Request::builder()
+                .method("GET")
+                .uri("/account/jwk")
+                .body(Body::empty())
+                .unwrap();
+
+            let response = router.oneshot(req).await.unwrap();
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        }
+
+        #[cfg(feature = "nft")]
+        #[tokio::test]
+        async fn test_nft_jwk() {
+            let config =  test_config();
+            let server = Server::new(config);
+            let router = router(server).unwrap();
+
+            let req = Request::builder()
+                .method("GET")
+                .uri("/nft/jwk")
+                .body(Body::empty())
+                .unwrap();
+
+            let response = router.oneshot(req).await.unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+        }
+
+        #[cfg(not(feature = "nft"))]
+        #[tokio::test]
+        async fn test_not_nft_jwk() {
+            let config = test_config();
+            let server = Server::new(config);
+            let router = router(server).unwrap();
+
+            let req = Request::builder()
+                .method("GET")
+                .uri("/nft/default/jwk")
+                .body(Body::empty())
+                .unwrap();
+
+            let response = router.oneshot(req).await.unwrap();
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        }
     }
 }

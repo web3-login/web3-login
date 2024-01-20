@@ -1,6 +1,6 @@
+use futures::executor::block_on;
 use std::str::FromStr;
 use web3::signing::{keccak256, recover};
-
 use web3::{
     contract::{Contract, Error, Options},
     types::{Address, U256},
@@ -25,8 +25,7 @@ impl NFTOwner for Web3 {
         _nft: Option<String>,
         chain: String,
     ) -> Result<bool, Box<dyn std::error::Error>> {
-        let rt = tokio::runtime::Runtime::new()?;
-        Ok(rt.block_on(is_nft_owner_of(contract, account, chain))?)
+        Ok(block_on(is_nft_owner_of(contract, account, chain))?)
     }
 }
 
@@ -44,9 +43,6 @@ pub fn validate_signature(account: String, nonce: String, signature: String) -> 
     let recovery_id = signature[64] as i32 - 27;
     let pubkey = recover(&message, &signature[..64], recovery_id);
     let pubkey = format!("{:02X?}", pubkey.unwrap());
-
-    println!("{} {}", account, pubkey);
-
     pubkey == account
 }
 

@@ -1,7 +1,7 @@
 use chrono::{Duration, Utc};
 use openidconnect::core::{
-    CoreGenderClaim, CoreJsonWebKeyType, CoreJweContentEncryptionAlgorithm,
-    CoreJwsSigningAlgorithm, CoreRsaPrivateSigningKey, CoreTokenType,
+    CoreEdDsaPrivateSigningKey, CoreGenderClaim, CoreJsonWebKeyType,
+    CoreJweContentEncryptionAlgorithm, CoreJwsSigningAlgorithm, CoreTokenType,
 };
 use openidconnect::{
     AccessToken, Audience, AuthorizationCode, EmptyExtraTokenFields, IdToken, IdTokenClaims,
@@ -40,7 +40,6 @@ pub async fn token(
     access_token: AccessToken,
     code: AuthorizationCode,
 ) -> Web3TokenResponse {
-    let rsa_pem = config.rsa_pem.clone();
     let id_token = IdToken::new(
         IdTokenClaims::new(
             IssuerUrl::new(config.ext_hostname.to_string()).unwrap(),
@@ -55,14 +54,14 @@ pub async fn token(
         // with one of the CoreJwsSigningAlgorithm::HmacSha* signing algorithms. When using an
         // HMAC-based signing algorithm, the UTF-8 representation of the client secret should
         // be used as the HMAC key.
-        &CoreRsaPrivateSigningKey::from_pem(
-            &rsa_pem.unwrap_or_default(),
+        &CoreEdDsaPrivateSigningKey::from_ed25519_pem(
+            config.eddsa_pem.as_ref().unwrap(),
             Some(JsonWebKeyId::new(config.key_id.to_string())),
         )
-        .expect("Invalid RSA private key"),
+        .expect("Invalid EdDsa private key"),
         // Uses the RS256 signature algorithm. This crate supports any RS*, PS*, or HS*
         // signature algorithm.
-        CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256,
+        CoreJwsSigningAlgorithm::EdDsaEd25519,
         // When returning the ID token alongside an access token (e.g., in the Authorization Code
         // flow), it is recommended to pass the access token here to set the `at_hash` claim
         // automatically.

@@ -13,15 +13,13 @@ use serde::{Deserialize, Serialize};
 use super::Server;
 
 pub async fn get_providers(app: State<Server>) -> Json<serde_json::Value> {
-    let config = &app.config;
     Json(serde_json::json!({
-        "providers": config.node_provider
+        "providers": app.config.node_provider
     }))
 }
 
 pub async fn get_realms(app: State<Server>) -> Json<serde_json::Value> {
-    let config = &app.config;
-    let realms: Vec<String> = config.chain_id.keys().cloned().collect();
+    let realms: Vec<String> = crate::config::realms(&app.config);
     Json(serde_json::json!({
         "realms": realms
     }))
@@ -46,7 +44,10 @@ pub async fn options_user_info() {}
 pub async fn get_jwk(app: State<Server>) -> Result<Json<serde_json::Value>, StatusCode> {
     match app.jwk() {
         Ok(jwk) => Ok(Json(jwk)),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(err) => {
+            log::error!("Error getting JWK: {}", err);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
     }
 }
 
