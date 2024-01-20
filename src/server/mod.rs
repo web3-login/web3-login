@@ -35,6 +35,7 @@ pub fn router(app: Server) -> Result<Router, Box<dyn Error>> {
         .nest_service("/index.js", ServeDir::new("static/index.js"))
         .nest_service("/400.html", ServeFile::new("static/400.html"))
         .nest_service("/401.html", ServeFile::new("static/401.html"))
+        .route_service("/", ServeFile::new("static/index.html"))
         .with_state(app);
     Ok(router)
 }

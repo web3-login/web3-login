@@ -19,9 +19,12 @@ pub async fn get_providers(app: State<Server>) -> Json<serde_json::Value> {
     }))
 }
 
-pub async fn get_realms(app: State<Server>) -> Json<Vec<String>> {
+pub async fn get_realms(app: State<Server>) -> Json<serde_json::Value> {
     let config = &app.config;
-    Json(config.chain_id.keys().cloned().collect())
+    let realms: Vec<String> = config.chain_id.keys().cloned().collect();
+    Json(serde_json::json!({
+        "realms": realms
+    }))
 }
 
 pub async fn get_frontend(app: State<Server>) -> Redirect {
