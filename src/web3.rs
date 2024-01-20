@@ -231,8 +231,6 @@ mod tests {
 
     #[test]
     fn test_validate_signature_2() {
-        // Somehow this is not working, but it works in web3.rs tests
-        let account = "0x9c9e8eabd947658bdb713e0d3ebfe56860abdb8d".to_string();
         let account = "0x9c9E8eAbD947658bDb713E0d3eBfe56860abdb8D".to_string();
         let nonce = "dotzxrenodo".to_string();
         let signature = "0x87b709d1e84aab056cf089af31e8d7c891d6f363663ff3eeb4bbb4c4e0602b2e3edf117fe548626b8d83e3b2c530cb55e2baff29ca54dbd495bb45764d9aa44c1c".to_string();

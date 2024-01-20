@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::{collections::HashMap, path::PathBuf};
 
-#[derive(Debug, Default, PartialEq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Deserialize, Clone)]
 pub struct Config {
     pub ext_hostname: String,
     pub frontend_host: String,
@@ -9,6 +9,26 @@ pub struct Config {
     pub node_provider: HashMap<String, String>,
     pub chain_id: HashMap<String, i32>,
     pub rsa_pem: Option<String>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        let mut node_provider = HashMap::new();
+        node_provider.insert(
+            "default".to_string(),
+            "https://kovan.infura.io/v3/43".to_string(),
+        );
+        let mut chain_id = HashMap::new();
+        chain_id.insert("default".to_string(), 42);
+        Config {
+            ext_hostname: "http://localhost:8000".to_string(),
+            frontend_host: "http://localhost:3000".to_string(),
+            key_id: "default".to_string(),
+            node_provider,
+            chain_id,
+            rsa_pem: None,
+        }
+    }
 }
 
 pub fn realms(config: &Config) -> Vec<String> {
@@ -63,5 +83,25 @@ mod tests {
         let config = load_yml_config(PathBuf::from("config.yml"));
         assert!(config.node_provider.len() > 2);
         assert!(config.chain_id.len() > 2);
+    }
+
+    #[test]
+    fn test_get_chain_id() {
+        let config = Config::default();
+        assert_eq!(get_chain_id(&config, "default"), 42);
+        assert_eq!(get_chain_id(&config, "unknown"), 42);
+    }
+
+    #[test]
+    fn test_get_node() {
+        let config = Config::default();
+        assert_eq!(
+            get_node(&config, "default"),
+            "https://kovan.infura.io/v3/43".to_string()
+        );
+        assert_eq!(
+            get_node(&config, "unknown"),
+            "https://kovan.infura.io/v3/43".to_string()
+        );
     }
 }

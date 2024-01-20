@@ -40,10 +40,7 @@ pub async fn get_user_info(
 
 pub async fn options_user_info() {}
 
-pub async fn get_jwk(
-    app: State<Server>,
-    OptionalPath(realm): OptionalPath<String>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
+pub async fn get_jwk(app: State<Server>) -> Result<Json<serde_json::Value>, StatusCode> {
     match app.jwk() {
         Ok(jwk) => Ok(Json(jwk)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
