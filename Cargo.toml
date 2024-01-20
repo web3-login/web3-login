@@ -9,7 +9,12 @@ repository = "https://github.com/web3-login/web3-login"
 version = "0.3.0"
 
 [lib]
+name = "web3_login"
 crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "web3-login"
+path = "src/main.rs"
 
 [features]
 default = ["account", "bin"]
@@ -51,3 +56,8 @@ http-body-util = "0.1.0"
 hyper = "1.1.0"
 tempfile = "3.9.0"
 tokio = { version = "1.35", features = ["full", "test-util"] }
+
+[[test]]
+name = "web3-login"
+path = "src/main.rs"
+harness = true
