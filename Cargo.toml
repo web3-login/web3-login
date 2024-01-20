@@ -6,7 +6,7 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.3.1"
+version = "0.3.2"
 
 [lib]
 name = "web3_login"
@@ -45,7 +45,7 @@ tokio = { version = "1.35", features = ["full"], optional = true }
 tower = "0.4.13"
 tower-http = { version = "0.5.1", features = ["fs", "trace"] }
 url = "2.5"
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.7", features = ["serde", "v4"] }
 web3 = { version = "0.19", default-features = false, features = [
     "signing",
     "http-rustls-tls",
