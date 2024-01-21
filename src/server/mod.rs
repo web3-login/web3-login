@@ -146,8 +146,9 @@ impl TokenTrait for Server {
     }
 }
 
+#[async_trait::async_trait]
 impl AuthorizeTrait for Server {
-    fn authorize(
+    async fn authorize(
         &self,
         auth_scope: AuthScope,
         realm: Option<String>,
@@ -162,20 +163,22 @@ impl AuthorizeTrait for Server {
         chain_id: Option<String>,
         contract: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn Error>> {
-        self.authorize.authorize(
-            auth_scope,
-            realm,
-            client_id,
-            redirect_uri,
-            state,
-            response_type,
-            response_mode,
-            nonce,
-            account,
-            signature,
-            chain_id,
-            contract,
-        )
+        self.authorize
+            .authorize(
+                auth_scope,
+                realm,
+                client_id,
+                redirect_uri,
+                state,
+                response_type,
+                response_mode,
+                nonce,
+                account,
+                signature,
+                chain_id,
+                contract,
+            )
+            .await
     }
 }
 

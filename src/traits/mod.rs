@@ -30,8 +30,9 @@ pub trait TokenTrait: Send + Sync {
     fn get_token(&self, code: String) -> Result<Value, Box<dyn Error>>;
 }
 
+#[async_trait::async_trait]
 pub trait AuthorizeTrait: Send + Sync {
-    fn authorize(
+    async fn authorize(
         &self,
         auth_scope: AuthScope,
         realm: Option<String>,

@@ -128,20 +128,23 @@ pub async fn get_authorize(
     params: Query<AuthorizeParams>,
     OptionalPath(auth_scope): OptionalPath<AuthScope>,
 ) -> impl IntoResponse {
-    match app.authorize(
-        auth_scope.unwrap_or(AuthScope::Account),
-        params.realm.clone(),
-        params.client_id.clone(),
-        params.redirect_uri.clone(),
-        params.state.clone(),
-        params.response_type.clone(),
-        params.response_mode.clone(),
-        params.nonce.clone(),
-        params.account.clone(),
-        params.signature.clone(),
-        params.chain_id.clone(),
-        params.contract.clone(),
-    ) {
+    match app
+        .authorize(
+            auth_scope.unwrap_or(AuthScope::Account),
+            params.realm.clone(),
+            params.client_id.clone(),
+            params.redirect_uri.clone(),
+            params.state.clone(),
+            params.response_type.clone(),
+            params.response_mode.clone(),
+            params.nonce.clone(),
+            params.account.clone(),
+            params.signature.clone(),
+            params.chain_id.clone(),
+            params.contract.clone(),
+        )
+        .await
+    {
         Ok(authorize) => match authorize {
             AuthorizeOutcome::RedirectNeeded(redirect) => {
                 Redirect::temporary(&redirect).into_response()

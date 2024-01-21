@@ -4,7 +4,6 @@ use crate::{
     token::token,
     traits::AuthorizeTrait,
 };
-use futures::executor::block_on;
 use openidconnect::TokenResponse;
 use openidconnect::{AccessToken, AuthorizationCode};
 use url::Url;
@@ -38,8 +37,9 @@ impl AuthorizeImpl {
     }
 }
 
+#[async_trait::async_trait]
 impl AuthorizeTrait for AuthorizeImpl {
-    fn authorize(
+    async fn authorize(
         &self,
         #[allow(unused_variables)] auth_scope: AuthScope,
         realm: Option<String>,
@@ -56,41 +56,46 @@ impl AuthorizeTrait for AuthorizeImpl {
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
         #[cfg(feature = "nft")]
         if auth_scope == AuthScope::NFT {
-            return block_on(self.authorize_nft(
-                realm.unwrap_or_else(|| "default".into()),
-                client_id,
-                redirect_uri,
-                state,
-                response_type,
-                response_mode,
-                nonce,
-                account,
-                signature,
-                chain_id,
-                contract,
-            ));
+            return self
+                .authorize_nft(
+                    realm.unwrap_or_else(|| "default".into()),
+                    client_id,
+                    redirect_uri,
+                    state,
+                    response_type,
+                    response_mode,
+                    nonce,
+                    account,
+                    signature,
+                    chain_id,
+                    contract,
+                )
+                .await;
         }
 
         match contract {
             #[cfg(feature = "nft")]
-            Some(contract) => block_on(self.authorize_nft(
-                realm.unwrap_or_else(|| "default".into()),
-                client_id,
-                redirect_uri,
-                state,
-                response_type,
-                response_mode,
-                nonce,
-                account,
-                signature,
-                chain_id,
-                Some(contract),
-            )),
+            Some(contract) => {
+                self.authorize_nft(
+                    realm.unwrap_or_else(|| "default".into()),
+                    client_id,
+                    redirect_uri,
+                    state,
+                    response_type,
+                    response_mode,
+                    nonce,
+                    account,
+                    signature,
+                    chain_id,
+                    Some(contract),
+                )
+                .await
+            }
 
             _ => {
                 #[cfg(feature = "account")]
                 {
-                    block_on(self.authorize_account(
+                    self.authorize_account(
                         realm.unwrap_or_else(|| "default".into()),
                         client_id,
                         redirect_uri,
@@ -102,7 +107,8 @@ impl AuthorizeTrait for AuthorizeImpl {
                         signature,
                         chain_id,
                         contract,
-                    ))
+                    )
+                    .await
                 }
                 #[cfg(not(feature = "account"))]
                 Ok(AuthorizeOutcome::Denied("access%20denied".to_string()))
