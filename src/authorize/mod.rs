@@ -50,7 +50,7 @@ pub enum AuthScope {
     Account,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum AuthorizeOutcome {
     RedirectNeeded(String),
     Error(String),
@@ -58,7 +58,7 @@ pub enum AuthorizeOutcome {
     Denied(String),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct AuthData {
     pub code: String,
     pub id_token: Option<String>,
