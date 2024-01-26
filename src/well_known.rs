@@ -26,17 +26,17 @@ impl WellKnownTrait for WellKnownImpl {
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         let provider_metadata = CoreProviderMetadata::new(
             IssuerUrl::new(match auth_scope {
-                AuthScope::Account => format!("{}/account", self.config.ext_hostname),
+                AuthScope::Account => format!("{}", self.config.ext_hostname),
                 #[cfg(feature = "nft")]
                 AuthScope::NFT => format!("{}/nft", self.config.ext_hostname),
             })?,
             AuthUrl::new(match auth_scope {
-                AuthScope::Account => format!("{}/account/authorize", self.config.ext_hostname),
+                AuthScope::Account => format!("{}/authorize", self.config.ext_hostname),
                 #[cfg(feature = "nft")]
                 AuthScope::NFT => format!("{}/nft/authorize", self.config.ext_hostname),
             })?,
             JsonWebKeySetUrl::new(match auth_scope {
-                AuthScope::Account => format!("{}/account/jwk", self.config.ext_hostname),
+                AuthScope::Account => format!("{}/jwk", self.config.ext_hostname),
                 #[cfg(feature = "nft")]
                 AuthScope::NFT => format!("{}/nft/jwk", self.config.ext_hostname),
             })?,
@@ -49,12 +49,12 @@ impl WellKnownTrait for WellKnownImpl {
             EmptyAdditionalProviderMetadata {},
         )
         .set_token_endpoint(Some(TokenUrl::new(match auth_scope {
-            AuthScope::Account => format!("{}/account/token", self.config.ext_hostname),
+            AuthScope::Account => format!("{}/token", self.config.ext_hostname),
             #[cfg(feature = "nft")]
             AuthScope::NFT => format!("{}/nft/token", self.config.ext_hostname),
         })?))
         .set_userinfo_endpoint(Some(UserInfoUrl::new(match auth_scope {
-            AuthScope::Account => format!("{}/account/userinfo", self.config.ext_hostname),
+            AuthScope::Account => format!("{}/userinfo", self.config.ext_hostname),
             #[cfg(feature = "nft")]
             AuthScope::NFT => format!("{}/nft/userinfo", self.config.ext_hostname),
         })?))

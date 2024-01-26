@@ -363,7 +363,7 @@ mod authorize_tests {
             let body = response.into_body().collect().await.unwrap().to_bytes();
             let body: Value = serde_json::from_slice(&body).unwrap();
 
-            assert_eq!(body["issuer"], "http://localhost:8000/account");
+            assert_eq!(body["issuer"], "http://localhost:8000");
         }
 
         #[tokio::test]
@@ -387,10 +387,10 @@ mod authorize_tests {
             let body = response.into_body().collect().await.unwrap().to_bytes();
             let body: Value = serde_json::from_slice(&body).unwrap();
 
-            assert_eq!(body["issuer"], "http://localhost:8000/account");
+            assert_eq!(body["issuer"], "http://localhost:8000");
             assert_eq!(
                 body["authorization_endpoint"],
-                "http://localhost:8000/account/authorize"
+                "http://localhost:8000/authorize"
             );
         }
 
