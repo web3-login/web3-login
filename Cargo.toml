@@ -6,7 +6,7 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.4.1"
+version = "0.4.2"
 
 [lib]
 name = "web3_login"

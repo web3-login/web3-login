@@ -10,7 +10,10 @@ use axum_extra::extract::OptionalPath;
 use openidconnect::{core::CoreGenderClaim, UserInfoClaims};
 use serde::{Deserialize, Serialize};
 
+pub mod token;
+
 use super::Server;
+pub use token::*;
 
 pub async fn get_providers(app: State<Server>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
@@ -68,43 +71,6 @@ pub async fn get_authorize_configuration(
     match app.authorize_configuration(auth_scope.unwrap_or(AuthScope::Account)) {
         Ok(authorize) => Ok(Json(authorize)),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TokenParams {
-    pub code: String,
-}
-
-pub async fn get_token(
-    app: State<Server>,
-    params: Query<TokenParams>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    match app.get_token(params.code.clone()) {
-        Ok(token) => Ok(Json(token)),
-        Err(err) => {
-            if err.to_string() == "Invalid Code" {
-                Err(StatusCode::BAD_REQUEST)
-            } else {
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-        }
-    }
-}
-
-pub async fn post_token(
-    app: State<Server>,
-    Json(payload): Json<TokenParams>,
-) -> Result<Json<serde_json::Value>, StatusCode> {
-    match app.get_token(payload.code) {
-        Ok(token) => Ok(Json(token)),
-        Err(err) => {
-            if err.to_string() == "Invalid Code" {
-                Err(StatusCode::BAD_REQUEST)
-            } else {
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-        }
     }
 }
 
