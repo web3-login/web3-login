@@ -47,7 +47,7 @@ impl WellKnownTrait for WellKnownImpl {
             vec![CoreSubjectIdentifierType::Pairwise],
             vec![
                 CoreJwsSigningAlgorithm::EdDsaEd25519,
-                CoreJwsSigningAlgorithm::RsaSsaPssSha256,
+                CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256,
             ],
             EmptyAdditionalProviderMetadata {},
         )
