@@ -105,15 +105,17 @@ impl TokenTrait for TokenImpl {
 
 #[cfg(test)]
 mod tests {
+
+    use crate::config::tests::test_config;
     use base64::{
         alphabet,
         engine::{self, general_purpose},
         Engine as _,
     };
     use openidconnect::{JsonWebKey, PrivateSigningKey, SubjectIdentifier};
+    use rsa::sha2::Digest;
+    use rsa::sha2::Sha256;
     use serde_json::Value;
-
-    use crate::config::tests::test_config;
 
     use super::*;
 
@@ -189,6 +191,49 @@ mod tests {
         let verified = jwk.verify_signature(
             &CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256,
             message.as_bytes(),
+            &signature,
+        );
+
+        if verified.is_err() {
+            println!("{:?}", verified);
+        }
+
+        assert!(verified.is_ok());
+
+        let serialize_jwk = serde_json::to_string(&jwk).unwrap();
+
+        let deserialize_jwk: Value = serde_json::from_str(&serialize_jwk).unwrap();
+
+        let n = deserialize_jwk["n"].as_str().unwrap();
+        let e = deserialize_jwk["e"].as_str().unwrap();
+
+        println!("n {}", n);
+        println!("e {}", e);
+
+        let n_decoded = engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD)
+            .decode(n)
+            .unwrap();
+
+        let e_decoded = engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD)
+            .decode(e)
+            .unwrap();
+
+        let n_biguint = rsa::BigUint::from_bytes_be(&n_decoded);
+        let e_biguint = rsa::BigUint::from_bytes_be(&e_decoded);
+
+        let rsa_key = rsa::RsaPublicKey::new(n_biguint, e_biguint);
+
+        assert!(rsa_key.is_ok());
+
+        let rsa_key = rsa_key.unwrap();
+
+        let mut hasher = Sha256::new();
+        hasher.update(message.as_bytes());
+        let hashed_message = hasher.finalize();
+
+        let verified = rsa_key.verify(
+            rsa::pkcs1v15::Pkcs1v15Sign::new::<Sha256>(),
+            hashed_message.as_slice(),
             &signature,
         );
 
