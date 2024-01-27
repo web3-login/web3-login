@@ -46,5 +46,7 @@ pub trait AuthorizeTrait: Send + Sync {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
+        code_challenge: Option<String>,
+        code_challenge_method: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn Error>>;
 }

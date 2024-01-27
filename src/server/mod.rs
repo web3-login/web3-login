@@ -162,6 +162,8 @@ impl AuthorizeTrait for Server {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
+        code_challenge: Option<String>,
+        code_challenge_method: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn Error>> {
         self.authorize
             .authorize(
@@ -177,6 +179,8 @@ impl AuthorizeTrait for Server {
                 signature,
                 chain_id,
                 contract,
+                code_challenge,
+                code_challenge_method,
             )
             .await
     }

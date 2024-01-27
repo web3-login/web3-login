@@ -1,3 +1,8 @@
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
+
 use crate::{
     claims::{additional_claims, standard_claims},
     config::{get_chain_id, get_node},
@@ -35,6 +40,24 @@ impl AuthorizeImpl {
             tokens,
         }
     }
+
+    pub fn new_with_config(config: crate::config::Config) -> Self {
+        let claims: crate::claims::ClaimsMutex = crate::claims::ClaimsMutex {
+            standard_claims: Arc::new(Mutex::new(HashMap::new())),
+            additional_claims: Arc::new(Mutex::new(HashMap::new())),
+        };
+
+        let tokens: crate::token::Tokens = crate::token::Tokens {
+            muted: Arc::new(Mutex::new(HashMap::new())),
+            bearer: Arc::new(Mutex::new(HashMap::new())),
+        };
+
+        Self {
+            config,
+            claims,
+            tokens,
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -53,6 +76,8 @@ impl AuthorizeTrait for AuthorizeImpl {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
+        code_challenge: Option<String>,
+        code_challenge_method: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
         #[cfg(feature = "nft")]
         if auth_scope == AuthScope::NFT {
@@ -69,6 +94,8 @@ impl AuthorizeTrait for AuthorizeImpl {
                     signature,
                     chain_id,
                     contract,
+                    code_challenge,
+                    code_challenge_method,
                 )
                 .await;
         }
@@ -88,6 +115,8 @@ impl AuthorizeTrait for AuthorizeImpl {
                     signature,
                     chain_id,
                     Some(contract),
+                    code_challenge,
+                    code_challenge_method,
                 )
                 .await
             }
@@ -107,6 +136,8 @@ impl AuthorizeTrait for AuthorizeImpl {
                         signature,
                         chain_id,
                         contract,
+                        code_challenge,
+                        code_challenge_method,
                     )
                     .await
                 }
@@ -132,6 +163,8 @@ impl AuthorizeImpl {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
+        code_challenge: Option<String>,
+        code_challenge_method: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
         if Url::parse(&redirect_uri).is_err() {
             return Ok(AuthorizeOutcome::Error(
@@ -155,6 +188,14 @@ impl AuthorizeImpl {
                     &chain_id.clone().unwrap_or_else(|| realm.clone()),
                 )
                 .append_pair("contract", &contract.unwrap_or_else(|| client_id.clone()));
+            if let Some(code_challenge) = code_challenge {
+                url.query_pairs_mut()
+                    .append_pair("code_challenge", &code_challenge);
+            }
+            if let Some(code_challenge_method) = code_challenge_method {
+                url.query_pairs_mut()
+                    .append_pair("code_challenge_method", &code_challenge_method);
+            }
             return Ok(AuthorizeOutcome::RedirectNeeded(url.to_string()));
         };
 
@@ -289,6 +330,8 @@ impl AuthorizeImpl {
         signature: Option<String>,
         chain_id: Option<String>,
         contract: Option<String>,
+        code_challenge: Option<String>,
+        code_challenge_method: Option<String>,
     ) -> Result<AuthorizeOutcome, Box<dyn std::error::Error>> {
         if Url::parse(&redirect_uri).is_err() {
             return Ok(AuthorizeOutcome::Error(
@@ -312,6 +355,14 @@ impl AuthorizeImpl {
                     &chain_id.clone().unwrap_or_else(|| realm.clone()),
                 )
                 .append_pair("contract", &contract.unwrap_or_else(|| client_id.clone()));
+            if let Some(code_challenge) = code_challenge {
+                url.query_pairs_mut()
+                    .append_pair("code_challenge", &code_challenge);
+            }
+            if let Some(code_challenge_method) = code_challenge_method {
+                url.query_pairs_mut()
+                    .append_pair("code_challenge_method", &code_challenge_method);
+            }
             return Ok(AuthorizeOutcome::RedirectNeeded(url.to_string()));
         };
 
@@ -399,8 +450,7 @@ impl AuthorizeImpl {
             additional_claims,
             access_token.clone(),
             code.clone(),
-        )
-        .await;
+        );
 
         let id_token = token.id_token().unwrap().to_string();
 
@@ -437,5 +487,100 @@ impl AuthorizeImpl {
         };
 
         Ok(AuthorizeOutcome::RedirectNeeded(redirect_uri.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_redirect_parameters() {
+        let config = crate::config::tests::test_config();
+        let authorize = AuthorizeImpl::new_with_config(config.clone());
+
+        let realm = Some("default".to_string());
+        let client_id = "client_id".to_string();
+        let redirect_uri = "https://redirect_uri".to_string();
+        let state = Some("state".to_string());
+        let response_type = Some("response_type".to_string());
+        let response_mode = Some("response_mode".to_string());
+        let nonce = Some("nonce".to_string());
+        let account = None;
+        let signature = Some("signature".to_string());
+        let chain_id = Some("chain_id".to_string());
+        let contract = Some("contract".to_string());
+        let code_challenge = Some("code_challenge".to_string());
+        let code_challenge_method = Some("code_challenge_method".to_string());
+
+        let outcome = authorize
+            .authorize(
+                AuthScope::Account,
+                realm,
+                client_id,
+                redirect_uri,
+                state,
+                response_type,
+                response_mode,
+                nonce,
+                account,
+                signature,
+                chain_id,
+                contract,
+                code_challenge,
+                code_challenge_method,
+            )
+            .await;
+
+        assert!(outcome.is_ok());
+
+        let outcome = outcome.unwrap();
+
+        assert!(matches!(outcome, AuthorizeOutcome::RedirectNeeded(_)));
+
+        let outcome = match outcome {
+            AuthorizeOutcome::RedirectNeeded(outcome) => outcome,
+            _ => "".to_string(),
+        };
+
+        let url = Url::parse(&outcome);
+
+        assert!(url.is_ok());
+
+        let url = url.unwrap();
+
+        assert_eq!(url.scheme(), "http");
+        assert_eq!(url.host_str(), Some("localhost"));
+        assert_eq!(url.path(), "/");
+
+        let query_pairs: HashMap<_, _> = url.query_pairs().into_owned().collect();
+
+        assert_eq!(query_pairs.get("client_id"), Some(&"client_id".to_string()));
+        assert_eq!(query_pairs.get("state"), Some(&"state".to_string()));
+        assert_eq!(query_pairs.get("nonce"), Some(&"nonce".to_string()));
+        assert_eq!(
+            query_pairs.get("response_type"),
+            Some(&"response_type".to_string())
+        );
+        assert_eq!(
+            query_pairs.get("response_mode"),
+            Some(&"response_mode".to_string())
+        );
+        assert_eq!(
+            query_pairs.get("redirect_uri"),
+            Some(&"https://redirect_uri".to_string())
+        );
+        assert_eq!(query_pairs.get("realm"), Some(&"default".to_string()));
+        assert_eq!(query_pairs.get("chain_id"), Some(&"chain_id".to_string()));
+        assert_eq!(query_pairs.get("contract"), Some(&"contract".to_string()));
+        assert_eq!(
+            query_pairs.get("code_challenge"),
+            Some(&"code_challenge".to_string())
+        );
+        assert_eq!(
+            query_pairs.get("code_challenge_method"),
+            Some(&"code_challenge_method".to_string())
+        );
     }
 }

@@ -6,7 +6,7 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.4.7"
+version = "0.4.8"
 
 [lib]
 name = "web3_login"
@@ -17,7 +17,7 @@ name = "web3-login"
 path = "src/bin/main.rs"
 
 [features]
-default = ["account"]
+default = ["account", "nft"]
 cli = ["bin", "clap"]
 account = ["web3"]
 nft = ["account", "web3"]

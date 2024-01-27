@@ -87,6 +87,8 @@ pub struct AuthorizeParams {
     pub realm: Option<String>,
     pub chain_id: Option<String>,
     pub contract: Option<String>,
+    pub code_challenge: Option<String>,
+    pub code_challenge_method: Option<String>,
 }
 
 pub async fn get_authorize(
@@ -108,6 +110,8 @@ pub async fn get_authorize(
             params.signature.clone(),
             params.chain_id.clone(),
             params.contract.clone(),
+            params.code_challenge.clone(),
+            params.code_challenge_method.clone(),
         )
         .await
     {
