@@ -45,7 +45,10 @@ impl WellKnownTrait for WellKnownImpl {
                 ResponseTypes::new(vec![CoreResponseType::Token, CoreResponseType::IdToken]),
             ],
             vec![CoreSubjectIdentifierType::Pairwise],
-            vec![CoreJwsSigningAlgorithm::RsaSsaPssSha256],
+            vec![
+                CoreJwsSigningAlgorithm::EdDsaEd25519,
+                CoreJwsSigningAlgorithm::RsaSsaPssSha256,
+            ],
             EmptyAdditionalProviderMetadata {},
         )
         .set_token_endpoint(Some(TokenUrl::new(match auth_scope {
@@ -78,5 +81,37 @@ impl WellKnownTrait for WellKnownImpl {
         auth_scope: AuthScope,
     ) -> Result<serde_json::Value, Box<dyn std::error::Error>> {
         self.openid_configuration(auth_scope)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_openid_configuration() {
+        let config: Config = Config::default();
+        let well_known = WellKnownImpl::new(config);
+        let openid_configuration = well_known.openid_configuration(AuthScope::Account).unwrap();
+        assert_eq!(
+            openid_configuration["issuer"],
+            "http://localhost:8000".to_string()
+        );
+        assert_eq!(
+            openid_configuration["authorization_endpoint"],
+            "http://localhost:8000/authorize".to_string()
+        );
+        assert_eq!(
+            openid_configuration["jwks_uri"],
+            "http://localhost:8000/jwk".to_string()
+        );
+        assert_eq!(
+            openid_configuration["token_endpoint"],
+            "http://localhost:8000/token".to_string()
+        );
+        assert_eq!(
+            openid_configuration["userinfo_endpoint"],
+            "http://localhost:8000/userinfo".to_string()
+        );
     }
 }

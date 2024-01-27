@@ -5,13 +5,15 @@ use openidconnect::core::{
 };
 use openidconnect::{
     AccessToken, Audience, AuthorizationCode, EmptyExtraTokenFields, IdToken, IdTokenClaims,
-    IdTokenFields, IssuerUrl, JsonWebKeyId, StandardClaims, StandardTokenResponse,
+    IdTokenFields, IssuerUrl, JsonWebKeyId, PrivateSigningKey, StandardClaims,
+    StandardTokenResponse,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use crate::claims::Claims;
 use crate::config::Config;
+use crate::signing_key_store::SigningKeyStore;
 use crate::traits::TokenTrait;
 
 pub type Web3IdTokenFields = IdTokenFields<
@@ -40,39 +42,34 @@ pub async fn token(
     access_token: AccessToken,
     code: AuthorizationCode,
 ) -> Web3TokenResponse {
-    let id_token = IdToken::new(
-        IdTokenClaims::new(
-            IssuerUrl::new(config.ext_hostname.to_string()).unwrap(),
-            vec![Audience::new(client_id)],
-            Utc::now() + Duration::seconds(300),
-            Utc::now(),
-            standard_claims,
-            additional_claims,
-        ),
-        // The private key used for signing the ID token. For confidential clients (those able
-        // to maintain a client secret), a CoreHmacKey can also be used, in conjunction
-        // with one of the CoreJwsSigningAlgorithm::HmacSha* signing algorithms. When using an
-        // HMAC-based signing algorithm, the UTF-8 representation of the client secret should
-        // be used as the HMAC key.
-        &CoreEdDsaPrivateSigningKey::from_ed25519_pem(
-            config.eddsa_pem.as_ref().unwrap(),
-            Some(JsonWebKeyId::new(config.key_id.to_string())),
-        )
-        .expect("Invalid EdDsa private key"),
-        // Uses the RS256 signature algorithm. This crate supports any RS*, PS*, or HS*
-        // signature algorithm.
-        CoreJwsSigningAlgorithm::EdDsaEd25519,
-        // When returning the ID token alongside an access token (e.g., in the Authorization Code
-        // flow), it is recommended to pass the access token here to set the `at_hash` claim
-        // automatically.
-        Some(&access_token),
-        // When returning the ID token alongside an authorization code (e.g., in the implicit
-        // flow), it is recommended to pass the authorization code here to set the `c_hash` claim
-        // automatically.
-        Some(&code),
-    )
-    .unwrap();
+    let claims = IdTokenClaims::new(
+        IssuerUrl::new(config.ext_hostname.to_string()).unwrap(),
+        vec![Audience::new(client_id)],
+        Utc::now() + Duration::seconds(300),
+        Utc::now(),
+        standard_claims,
+        additional_claims,
+    );
 
+    let id_token = match (config.get_eddsa_key(), config.get_rsa_key()) {
+        (Ok(eddsa_key), _) => IdToken::new(
+            claims,
+            &eddsa_key,
+            CoreJwsSigningAlgorithm::EdDsaEd25519,
+            Some(&access_token),
+            Some(&code),
+        )
+        .unwrap(),
+        (_, Ok(rsa_key)) => IdToken::new(
+            claims,
+            &rsa_key,
+            CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256,
+            Some(&access_token),
+            Some(&code),
+        )
+        .unwrap(),
+        _ => panic!("No key"),
+    };
     Web3TokenResponse::new(
         access_token,
         CoreTokenType::Bearer,
