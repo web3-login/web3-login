@@ -1,12 +1,11 @@
 use chrono::{Duration, Utc};
 use openidconnect::core::{
-    CoreEdDsaPrivateSigningKey, CoreGenderClaim, CoreJsonWebKeyType,
-    CoreJweContentEncryptionAlgorithm, CoreJwsSigningAlgorithm, CoreTokenType,
+    CoreGenderClaim, CoreJsonWebKeyType, CoreJweContentEncryptionAlgorithm,
+    CoreJwsSigningAlgorithm, CoreTokenType,
 };
 use openidconnect::{
     AccessToken, Audience, AuthorizationCode, EmptyExtraTokenFields, IdToken, IdTokenClaims,
-    IdTokenFields, IssuerUrl, JsonWebKeyId, PrivateSigningKey, StandardClaims,
-    StandardTokenResponse,
+    IdTokenFields, IssuerUrl, StandardClaims, StandardTokenResponse,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -33,7 +32,7 @@ pub struct Tokens {
     pub bearer: Arc<Mutex<HashMap<String, String>>>,
 }
 
-pub async fn token(
+pub fn token(
     config: &Config,
     client_id: String,
     _nonce: Option<String>,
@@ -101,5 +100,102 @@ impl TokenTrait for TokenImpl {
             Some(token) => Ok(serde_json::to_value(token.clone())?),
             _ => Err("Invalid Code".into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use base64::{
+        alphabet,
+        engine::{self, general_purpose},
+        Engine as _,
+    };
+    use openidconnect::{JsonWebKey, PrivateSigningKey, SubjectIdentifier};
+    use serde_json::Value;
+
+    use crate::config::tests::test_config;
+
+    use super::*;
+
+    #[test]
+    fn test_jwt_signature() {
+        let mut config = test_config();
+
+        config.key_id = "kid".to_string();
+        config.eddsa_pem = None;
+
+        let client_id = "client_id".to_string();
+        let nonce = Some("nonce".to_string());
+        let standard_claims = StandardClaims::new(SubjectIdentifier::new("account".to_string()));
+        let additional_claims = Claims {
+            account: "account".to_string(),
+            nonce: "nonce".to_string(),
+            signature: "signature".to_string(),
+            chain_id: 1,
+            node: "node".to_string(),
+            contract: "contract".to_string(),
+        };
+
+        let access_token = AccessToken::new("access_token".to_string());
+        let code = AuthorizationCode::new("code".to_string());
+
+        let response = token(
+            &config,
+            client_id,
+            nonce,
+            standard_claims,
+            additional_claims,
+            access_token,
+            code,
+        );
+
+        println!(" response {:?}", response);
+
+        let serialized = serde_json::to_string(&response).unwrap();
+
+        let deserialized: Value = serde_json::from_str(&serialized).unwrap();
+
+        let id_token = deserialized["id_token"].as_str().unwrap();
+
+        assert_eq!(id_token.split(".").count(), 3);
+
+        let header = id_token.split(".").collect::<Vec<&str>>()[0];
+        let payload = id_token.split(".").collect::<Vec<&str>>()[1];
+
+        let message = format!("{}.{}", header, payload);
+
+        let decoded_header =
+            engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD)
+                .decode(header)
+                .unwrap();
+
+        let header: Value = serde_json::from_slice(&decoded_header).unwrap();
+
+        let kid = format!("{}-rsa", config.key_id.to_string());
+
+        assert_eq!(header["alg"], "RS256");
+        assert_eq!(header["kid"], kid);
+
+        let signature = id_token.split(".").collect::<Vec<&str>>()[2];
+
+        let rsa_key = config.get_rsa_key().unwrap();
+
+        let jwk = rsa_key.as_verification_key();
+
+        let signature = engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD)
+            .decode(signature)
+            .unwrap();
+
+        let verified = jwk.verify_signature(
+            &CoreJwsSigningAlgorithm::RsaSsaPkcs1V15Sha256,
+            message.as_bytes(),
+            &signature,
+        );
+
+        if verified.is_err() {
+            println!("{:?}", verified);
+        }
+
+        assert!(verified.is_ok());
     }
 }

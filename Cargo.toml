@@ -6,7 +6,7 @@ license = "MIT"
 name = "web3-login"
 readme = "README.md"
 repository = "https://github.com/web3-login/web3-login"
-version = "0.4.6"
+version = "0.4.7"
 
 [lib]
 name = "web3_login"
@@ -53,6 +53,7 @@ web3 = { version = "0.19", default-features = false, features = [
 
 [dev-dependencies]
 axum-test = "14.2.2"
+base64 = "0.21.7"
 http-body-util = "0.1.0"
 hyper = "1.1.0"
 tempfile = "3.9.0"

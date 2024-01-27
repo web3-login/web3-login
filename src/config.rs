@@ -78,7 +78,36 @@ pub fn load_yml_config(path: PathBuf) -> Config {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+
+    pub fn test_config() -> Config {
+        let mut config: Config = Config::default();
+        config.eddsa_pem = Some(
+            r#"-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINsjesLaPcnsC79ywSYvigidJ2TQ+aOBPsOh3KJg5Yk+
+-----END PRIVATE KEY-----"#
+                .to_string(),
+        );
+        config.rsa_pem = Some(
+            r#"-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQDLbbQYA4uc0GeUSYlBrapitZlZPcCMMx+IJ30A18uK5/VIIpuq
+1NgfovIq1Kaw3EZ5FeNwxvG8k78gnQLVxe/icSbwWeSVvaAN4JzsNmmNT4RlBAex
+F88iUvsNJjC/15xGPgcejwl+6CBwE0kmhV/p7pQVMzMhV8qQqKH46Z46zQIDAQAB
+AoGBAILv5rZ6ObfCsJjSyET9Cimk58J4K+JR2Z7ig+QyAfIzoT5AAGBxxXZ/hE4r
+N+uorLetbgqeEuSlWKUeSr/cOq0ol4Pw9mjuVz2/36R60/uT9MSfImk4MfXsdgqO
+H+QfYw24rVIulDk3WT3pGJ7Oe51pqenanFjrCXdmnj81BJJlAkEA8XhhJBr0YftY
+2D0Bli0uNc9TJ4KiZmvY7dcwwgrWSnxS1Gc8z7EVgGHHndcE5pw5QaQwRj0YezzF
+JbauO/redwJBANerU9xG3dpufnrH/oQ+ZWA8m1OHVL9Wwo5XYodeYYYKnL7qRiNY
+McscyJKiLbbzuzo8IJdBnkXgIK4sbd0RLdsCQDxmWR4X4/MyVNnaALCY4osxLeKf
+KZIm/d8YSajv3wRIrstUe4CUEgXH74+Kvj4U67mAoVagZ6RD4ih51oFIUicCQBUb
+cXOng+Ly2XIOzLwIl0dZ5yG/pu2rAhOIPd5dwFGsDDcrGn4vDYCBaqffM3YqWHKU
+m+Pxyhmwm8IwGvh9y+0CQHMARWF0WNIo9nGZUL9AeLBA+gdGeGZZAIAh1kjoz//o
+zBJcklyiwc4iCd5T6Ja8HFzgJDSKCxAoKfHEg/JXS8I=
+-----END RSA PRIVATE KEY-----"#
+                .to_string(),
+        );
+        config
+    }
 
     use super::*;
 

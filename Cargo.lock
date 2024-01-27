@@ -2973,13 +2973,14 @@ dependencies = [
 
 [[package]]
 name = "web3-login"
-version = "0.4.6"
+version = "0.4.7"
 dependencies = [
  "async-trait",
  "axum",
  "axum-auth",
  "axum-extra",
  "axum-test",
+ "base64 0.21.7",
  "chrono",
  "clap",
  "futures",

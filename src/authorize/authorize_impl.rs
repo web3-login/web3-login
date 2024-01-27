@@ -236,8 +236,7 @@ impl AuthorizeImpl {
             additional_claims,
             access_token.clone(),
             code.clone(),
-        )
-        .await;
+        );
 
         let id_token = token.id_token().unwrap().to_string();
 
