@@ -32,3 +32,4 @@ chain_id:
 ext_hostname: "http://localhost:8000"
 frontend_host: "http://localhost:8081"
 eddsa_pem: "-----BEGIN PRIVATE KEY-----\nMC4CAQAwBQYDK2VwBCIEIOKlIljKAZAW2V8x4Vq+Xc9k6IVQplhg1nyeoaj245Zp\n-----END PRIVATE KEY-----"
+rsa_pem_file: "do_not_use_rsa.pem"

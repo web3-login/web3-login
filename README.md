@@ -36,6 +36,7 @@ cargo run     # Start the web3-login service
 
 ```sh
 openssl genpkey -algorithm ed25519
+openssl genrsa --traditional -out private_rsa.pem 1024
 ```
 
 Copy the generated private key to config.yml.

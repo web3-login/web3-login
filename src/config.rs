@@ -9,6 +9,8 @@ pub struct Config {
     pub node_provider: HashMap<String, String>,
     pub chain_id: HashMap<String, i32>,
     pub eddsa_pem: Option<String>,
+    pub rsa_pem: Option<String>,
+    pub rsa_pem_file: Option<PathBuf>,
 }
 
 impl Default for Config {
@@ -27,6 +29,8 @@ impl Default for Config {
             node_provider,
             chain_id,
             eddsa_pem: None,
+            rsa_pem: None,
+            rsa_pem_file: None,
         }
     }
 }
